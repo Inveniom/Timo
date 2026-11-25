@@ -1177,5 +1177,36 @@ const thimoStaffNavStyle=document.createElement('style');
 thimoStaffNavStyle.textContent='.staff-question-card{margin:16px 0}.staff-question-form .actions{align-items:center}.finance-edit-grid input,.finance-percent-fields input{min-width:0}.finance-edit-row{min-height:58px}';
 document.head.appendChild(thimoStaffNavStyle);
 
+
+/* Definitieve financiële editor: direct zichtbaar, direct opslaan tijdens typen. */
+function financeView(){
+ const ids=Object.keys(demoClients);
+ if(!financeClientId||!demoClients[financeClientId]) financeClientId=ids[0]||null;
+ const all=ids.map(id=>({id,c:demoClients[id],f:demoFinancials(id)}));
+ const total=all.reduce((a,x)=>a+x.f.total,0);
+ return title('Medewerkersomgeving','Financiën','Selecteer een project en wijzig de bedragen rechtstreeks. Wijzigingen worden direct in deze browser opgeslagen.')+
+ '<div class="notice"><strong>Fictieve demo-bedragen.</strong> Geen echte offertes, verkoopprijzen of gevalideerde kostprijzen.</div>'+
+ '<div class="card"><label for="financeProjectSelect">Project selecteren</label><select id="financeProjectSelect">'+all.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===financeClientId?'selected':'')+'>'+esc(x.c.name)+'</option>').join('')+'</select></div>'+
+ '<div class="grid">'+metric(euroCompact(total),'Totaal demo-ramingen incl. btw')+metric(all.length,'Projecten')+'</div>'+
+ (financeClientId?financeDetail(financeClientId):'<div class="card">Er zijn nog geen projecten beschikbaar.</div>');
+}
+document.addEventListener('change',e=>{
+ if(e.target?.id==='financeProjectSelect'){financeClientId=e.target.value;render();return}
+},true);
+document.addEventListener('input',e=>{
+ const el=e.target;
+ if(!el?.hasAttribute('data-finance-item')&&!el?.hasAttribute('data-finance-percent'))return;
+ const id=financeClientId;if(!id||!demoClients[id])return;
+ const current=thimoFinanceOverrides(id)||{items:demoFinancials(id).items.map(x=>x[1]),reservePct:10,vatPct:21};
+ if(el.hasAttribute('data-finance-item')){
+  const i=Number(el.dataset.financeItem);
+  if(Number.isInteger(i)&&i>=0&&i<current.items.length)current.items[i]=Math.max(0,Number(el.value)||0);
+ }else{
+  const key=el.dataset.financePercent;
+  if(key==='reservePct'||key==='vatPct')current[key]=Math.max(0,Math.min(100,Number(el.value)||0));
+ }
+ try{localStorage.setItem('thimo-finance-'+id,JSON.stringify(current))}catch(err){console.error('Financiële wijziging kon niet lokaal worden opgeslagen',err)}
+},true);
+
 render();
 </script></body></html>
