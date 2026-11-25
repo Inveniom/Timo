@@ -1264,5 +1264,21 @@ const thimoProductCostStyle=document.createElement('style');
 thimoProductCostStyle.textContent='.product-cost-input{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin:0;white-space:nowrap}.product-cost-input input{width:145px;min-width:100px;text-align:right;padding:9px 10px}.product-cost-card table td,.product-cost-card table th{vertical-align:middle}.product-unit-total{font-size:24px;font-weight:750;margin:12px 0}.product-unit-total small{font-size:12px;font-weight:500;color:#66756b}';
 document.head.appendChild(thimoProductCostStyle);
 
+
+/* Klantomgeving: lege linker navigatieruimte verwijderen */
+const thimoRenderBeforeClientWidth=render;
+render=function(){
+ thimoRenderBeforeClientWidth();
+ const shell=document.querySelector('.shell');
+ if(shell)shell.classList.toggle('client-fullwidth',role==='client');
+};
+const thimoClientWidthStyle=document.createElement('style');
+thimoClientWidthStyle.textContent=`
+.shell.client-fullwidth{grid-template-columns:minmax(0,1fr)}
+.shell.client-fullwidth>nav{display:none}
+.shell.client-fullwidth>main{width:100%;max-width:none;margin:0;padding-left:clamp(18px,2.5vw,38px);padding-right:clamp(18px,2.5vw,38px)}
+@media(max-width:760px){.shell.client-fullwidth>main{padding-left:16px;padding-right:16px}}
+`;
+document.head.appendChild(thimoClientWidthStyle);
 render();
 </script></body></html>
