@@ -92,6 +92,20 @@ h1{letter-spacing:-1.5px}
 .proposal-specs{background:#fff;margin:20px 0}
 @media(max-width:760px){.unit-options{grid-template-columns:1fr}.unit-detail,.proposal-grid{grid-template-columns:1fr}.unit-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.unit-detail{padding:14px}}
 
+/* Haven- en projectlogistiek */
+.logistics-card{border-top:4px solid #8ca17f}
+.logistics-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}
+.logistics-map{height:300px;border:1px solid #dce5d8;border-radius:7px;overflow:hidden;margin:16px 0}
+.logistics-map iframe{width:100%;height:100%;border:0}
+.logistics-map-placeholder{height:180px;display:grid;place-items:center;text-align:center;padding:20px;background:#edf1e8;color:#63756a;border-radius:7px;margin:16px 0}
+.logistics-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+.logistics-stats>div{background:#f1f4ee;border-radius:6px;padding:14px}
+.logistics-stats b,.logistics-stats small{display:block}
+.logistics-stats b{font-size:22px;color:#294b38}
+.logistics-stats small{font-size:12px;color:#63756a}
+.logistics-checks{line-height:1.8;color:#53665a}
+@media(max-width:760px){.logistics-entry{grid-template-columns:1fr}.logistics-entry button{width:100%}.logistics-map{height:240px}}
+
 /* Klantspecifieke projectcontext en verbeterde conceptvisualisatie */
 .customer-context{border-left:4px solid #8ca17f;background:#fbfcf8}
 .customer-meta{padding:13px 15px;background:#f1f4ee;border-radius:5px;color:#405548;font-size:14px}
@@ -190,6 +204,34 @@ function renderCustomerProposal(turns){
  const configSummary=Object.entries(unitConfiguration).map(([k,v])=>'<div class="line"><span>'+({indeling:'Indeling',gevel:'Gevel',keuken:'Keuken',badkamer:'Badkamer',installatie:'Installatie'}[k]||k)+'</span><strong>'+esc(v)+'</strong></div>').join('');
  return '<section class="card proposal-card"><div class="proposal-heading"><div class="eyebrow">Voorlopig klantvoorstel</div><h2>'+esc(d.title||'Uw ontwerpvoorstel')+'</h2><p>'+esc(d.summary||'Uw gekozen standaardunit vormt de basis voor de verdere uitwerking.')+'</p></div><div class="card proposal-edit"><div class="eyebrow">Uw uitgangspunt aan Timo</div><textarea id="proposalQuestion" rows="3">'+esc(latest.question||'')+'</textarea><div class="actions"><button type="button" class="alt" data-act="proposalQuestionSave">Bericht bijwerken</button></div></div><div class="proposal-grid"><div><h3>3D-massa-impressie</h3>'+massing+'<p class="muted">De massa toont de gekozen unitvariant in een schematische vorm. Geen architectonische visualisatie of maatvaste tekening.</p></div><div><h3>Opstelling op hoofdlijnen</h3>'+plan+'<p class="muted">Indicatieve weergave van maximaal 16 units; terrein, afstanden en ontsluiting zijn nog niet ingemeten.</p></div></div><div class="card proposal-specs"><div class="eyebrow">Uw gekozen configuratie</div><h3>'+selectedStandardUnit+' · '+u.label+'</h3><div class="unit-stats"><div><strong>'+area+'</strong><small>Per unit</small></div><div><strong>'+total+'</strong><small>Voor '+count+' units</small></div></div>'+configSummary+'</div><div class="proposal-grid"><div><h3>Ontwerp en indeling</h3><p>'+esc(d.design_concept||u.description)+'</p><p>'+esc(d.visualization_description||d.layout_description||'De indeling wordt op basis van uw configuratie en gebruik verder uitgewerkt.')+'</p><h3>Specificaties en materialen</h3><ul>'+(list(d.specifications)||'<li>Worden na keuze en technische verificatie aangevuld.</li>')+'</ul><ul>'+(list(d.materials)||'<li>Materiaalkeuzes worden in de volgende stap bevestigd.</li>')+'</ul></div><div><h3>Indicatieve kostenopbouw</h3>'+priceTable+'<ul>'+(list(d.cost_breakdown)||'')+'</ul></div></div>'+(d.technical_attention_points?.length?'<h3>Technische aandachtspunten</h3><ul>'+list(d.technical_attention_points)+'</ul>':'')+(d.missing_information?.length?'<h3>Nog te onderzoeken</h3><ul>'+list(d.missing_information)+'</ul>':'')+(d.inspiration_sources?.length?'<h3>Inspiratie en bronnen</h3><ul>'+list(d.inspiration_sources)+'</ul>':'')+'<p class="muted">Maten zijn voorlopige indicaties (Thimo265 circa 42 m² BVO / 8,0 m; Thimo365 circa 55 m² / 10,4 m; Thimo465 circa 69,4 m² / 12,9 m) en moeten actueel door Thimo365 worden bevestigd. Dit is geen bindende offerte of technisch goedgekeurd ontwerp.</p></section>';
 }
+
+function logisticsData(){try{return JSON.parse(localStorage.getItem('timo-logistics-'+selectedClientId))||{address:demoClients[selectedClientId].location||'',result:null}}catch{return {address:'',result:null}}}
+function saveLogisticsData(d){localStorage.setItem('timo-logistics-'+selectedClientId,JSON.stringify(d))}
+function logisticsPanel(){
+ const d=logisticsData(),res=d.result;
+ const map=res?'<div class="logistics-map"><iframe title="Kaart van projectlocatie" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox='+res.bbox+'&layer=mapnik&marker='+res.lat+'%2C'+res.lon+'"></iframe></div>':'<div class="logistics-map-placeholder">Na invoer van het projectadres verschijnt hier een kaart met de locatie.</div>';
+ const checks=['Route voor exceptioneel transport controleren (hoogte, breedte, lengte en totaalgewicht)','Draagkracht van bruggen, viaducten en lokale wegen laten toetsen','Benodigde transportvergunningen en eventuele politiebegeleiding bepalen','Losplaats, kraanopstelling en hijsbereik controleren','Laatste kilometers, bochten, obstakels en toegangsbreedte schouwen','Tijdvenster, verkeersmaatregelen en tijdelijke opslag afstemmen'];
+ return '<section class="card logistics-card"><div class="eyebrow">Logistiek · schip naar projectlocatie</div><h2>Transport vanaf de haven van Rotterdam</h2><p>De units komen per schip aan in de haven van Rotterdam. Vul het afleveradres in om een eerste route-indicatie en locatiekaart te tonen.</p><label for="logisticsAddress">Afleveradres / projectlocatie</label><div class="logistics-entry"><input id="logisticsAddress" value="'+esc(d.address)+'" placeholder="Straat, huisnummer, postcode en plaats"><button type="button" data-act="logisticsCheck">Controleer locatie</button></div><p class="muted">Vertrekpunt: havengebied Rotterdam (indicatief). De exacte terminal, unitafmetingen, massa en transportconfiguratie moeten later worden bevestigd.</p>'+ (res?'<div class="logistics-result"><div><strong>'+esc(res.display)+'</strong><div class="logistics-stats"><div><b>'+esc(res.distance)+'</b><small>Indicatieve rijafstand</small></div><div><b>'+esc(res.duration)+'</b><small>Indicatieve rijtijd</small></div></div><p class="muted">'+esc(res.routeNote)+'</p><a href="'+res.mapUrl+'" target="_blank" rel="noopener">Bekijk locatie en route in OpenStreetMap</a></div>'+map:'')+'<h3>Logistieke controlepunten</h3><ul class="logistics-checks">'+checks.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul><div class="notice">Dit is een eerste bureaumatige route-indicatie via een standaard autoroutering. Geen bevestiging dat een uitzonderlijk breed, hoog of zwaar unittransport de route mag of kan rijden. Hiervoor zijn voertuiggegevens, terminalgegevens, vergunningcheck en fysieke route-inspectie noodzakelijk.</div></section>';
+}
+async function runLogisticsCheck(){
+ const input=document.getElementById('logisticsAddress'),address=(input?.value||'').trim();
+ if(!address){alert('Vul eerst het afleveradres in.');return}
+ const d=logisticsData();d.address=address;d.result=null;saveLogisticsData(d);render();
+ try{
+  const geo=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q='+encodeURIComponent(address+', Netherlands'),{headers:{'Accept':'application/json'}});
+  if(!geo.ok)throw new Error('Locatie kon niet worden opgezocht.');
+  const places=await geo.json();if(!places.length)throw new Error('Geen locatie gevonden. Controleer straat, postcode en plaats.');
+  const p=places[0],lat=Number(p.lat),lon=Number(p.lon),startLon=4.14,startLat=51.95;
+  const route=await fetch('https://router.project-osrm.org/route/v1/driving/'+startLon+','+startLat+';'+lon+','+lat+'?overview=false&alternatives=false&steps=false');
+  if(!route.ok)throw new Error('Route-indicatie is tijdelijk niet beschikbaar.');
+  const rd=await route.json();if(rd.code!=='Ok'||!rd.routes?.length)throw new Error('Geen route-indicatie beschikbaar voor deze locatie.');
+  const rr=rd.routes[0],km=rr.distance/1000,mins=rr.duration/60;
+  const pad=.012,bbox=[lon-pad,lat-pad,lon+pad,lat+pad].join('%2C');
+  d.result={display:p.display_name,lat,lon,bbox,distance:km.toLocaleString('nl-NL',{maximumFractionDigits:1})+' km',duration:(mins/60).toLocaleString('nl-NL',{maximumFractionDigits:1})+' uur',routeNote:'Standaard route-indicatie vanaf een indicatief punt in het Rotterdamse havengebied; geen routegoedkeuring voor zwaar of exceptioneel transport.',mapUrl:'https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route='+startLat+'%2C'+startLon+'%3B'+lat+'%2C'+lon};
+  saveLogisticsData(d);render();
+ }catch(err){const status=document.getElementById('logisticsStatus');alert(err.message||'Locatiecontrole mislukt.');}
+}
+
 function chatView(){
  kp='customer';
  const turns=K.chats[kp]||[];
@@ -297,7 +339,7 @@ function chatView(){
  const turns=K.chats[kp]||[],client=demoClients[selectedClientId];
  const endpoint=localStorage.getItem('timo-worker-endpoint')||'https://timo-agent.martijn-d1c.workers.dev';
  localStorage.setItem('timo-worker-endpoint',endpoint);
- return title('Klantomgeving','Welkom bij '+esc(client.name),'Uw persoonlijke projectomgeving met eigen ontwerpkeuzes, gesprekshistorie en projectinformatie.')+customerSelector()+'<div class="card"><div class="eyebrow">Uw digitale ontwerpadviseur</div><p>Hallo '+esc(client.name)+'. Timo werkt met de informatie en voorkeuren die bij dit project horen.</p><div class="chatlog" aria-live="polite"><div class="botbubble"><strong>Timo</strong><p>Waar kan ik u mee helpen met '+esc(client.name)+'? Vertel wat u wilt realiseren of aanpassen.</p></div>'+turns.map((t,i)=>'<div class="userbubble">'+esc(t.question)+'</div><div class="botbubble"><strong>Timo</strong>'+(t.answer?'<p style="white-space:pre-wrap">'+esc(t.answer)+'</p>':'<p class="muted">Timo denkt na…</p>')+'<div class="actions">'+(t.sent?'<span class="tag">Voorgelegd aan medewerker</span>':button('Voorleggen aan medewerker','botEsc:'+i,true))+'</div></div>').join('')+'</div>'+unitConfigurator()+(turns.length?'':'<div class="actions">'+chatExamples.slice(0,5).map((q,i)=>button(q,'botExample:'+i,true)).join('')+'</div>')+'<form id="botform"><label for="botq">Uw bericht aan Timo</label><div class="botinput"><textarea id="botq" required rows="2" placeholder="Beschrijf uw vraag voor '+esc(client.name)+'…"></textarea><button type="submit">Verstuur</button></div></form>'+renderCustomerProposal(turns)+'<div id="botStatus" class="muted" role="status">'+esc(botConnectionStatus||'Timo is gekoppeld aan de beveiligde AI-dienst.')+'</div><div class="actions">'+button('Nieuw gesprek','botReset',true)+'</div></div><div class="notice">Deze klantomgeving toont uitsluitend een lokale demo. Prijsbedragen en klantprofielen zijn fictief. Toegang per klant moet voor echt gebruik nog met individuele accounts en serverautorisatie worden beveiligd.</div>';
+ return title('Klantomgeving','Welkom bij '+esc(client.name),'Uw persoonlijke projectomgeving met eigen ontwerpkeuzes, gesprekshistorie en projectinformatie.')+customerSelector()+logisticsPanel()+'<div class="card"><div class="eyebrow">Uw digitale ontwerpadviseur</div><p>Hallo '+esc(client.name)+'. Timo werkt met de informatie en voorkeuren die bij dit project horen.</p><div class="chatlog" aria-live="polite"><div class="botbubble"><strong>Timo</strong><p>Waar kan ik u mee helpen met '+esc(client.name)+'? Vertel wat u wilt realiseren of aanpassen.</p></div>'+turns.map((t,i)=>'<div class="userbubble">'+esc(t.question)+'</div><div class="botbubble"><strong>Timo</strong>'+(t.answer?'<p style="white-space:pre-wrap">'+esc(t.answer)+'</p>':'<p class="muted">Timo denkt na…</p>')+'<div class="actions">'+(t.sent?'<span class="tag">Voorgelegd aan medewerker</span>':button('Voorleggen aan medewerker','botEsc:'+i,true))+'</div></div>').join('')+'</div>'+unitConfigurator()+(turns.length?'':'<div class="actions">'+chatExamples.slice(0,5).map((q,i)=>button(q,'botExample:'+i,true)).join('')+'</div>')+'<form id="botform"><label for="botq">Uw bericht aan Timo</label><div class="botinput"><textarea id="botq" required rows="2" placeholder="Beschrijf uw vraag voor '+esc(client.name)+'…"></textarea><button type="submit">Verstuur</button></div></form>'+renderCustomerProposal(turns)+'<div id="botStatus" class="muted" role="status">'+esc(botConnectionStatus||'Timo is gekoppeld aan de beveiligde AI-dienst.')+'</div><div class="actions">'+button('Nieuw gesprek','botReset',true)+'</div></div><div class="notice">Deze klantomgeving toont uitsluitend een lokale demo. Prijsbedragen en klantprofielen zijn fictief. Toegang per klant moet voor echt gebruik nog met individuele accounts en serverautorisatie worden beveiligd.</div>';
 }
 function customerOverview(){
  const ids=Object.keys(demoClients),turns=Object.values(K.chats).flat();
@@ -341,6 +383,7 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('click',e=>{
  const a=e.target.closest('[data-act]')?.dataset.act;if(!a)return;
+ if(a==='logisticsCheck'){runLogisticsCheck();return}
  if(a.startsWith('clientOpen:')){selectedClientId=a.slice(11);localStorage.setItem('timo-selected-client',selectedClientId);loadClientUnitSettings();role='client';page='AI-assistent';kp=selectedClientId;render()}
  else if(a.startsWith('financeClient:')){financeClientId=a.slice(14);page='Financiën';role='staff';render()}
 },true);
