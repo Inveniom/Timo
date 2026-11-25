@@ -803,4 +803,56 @@ document.addEventListener('click',e=>{
 
 render();
 
+/* 3D-massa-impressie volgt de actuele positie en 90-gradenrotatie van iedere unit */
+function conceptSiteMassImpression(f){
+ const layout=conceptLayout(f),floors=Math.max(1,Math.min(4,Number.parseInt(String(unitConfiguration.floors||'1').match(/[0-9]+/)?.[0]||'1',10)));
+ const L=Number(f.plotL),W=Number(f.plotW),uL=Number(f.unitLength),uW=Number(f.unitWidth);
+ const sx=5.8,sy=2.85,sz=17,baseX=610,baseY=135+Math.max(L,W)*2.85;
+ const px=(x,y,z)=>[baseX+(x-y)*sx,baseY+(x+y)*sy-z*sz];
+ const poly=(pts,fill,stroke='#49645b')=>'<polygon points="'+pts.map(p=>p.join(',')).join(' ')+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.5" stroke-linejoin="round"/>';
+ const shapes=[];
+ shapes.push(poly([px(0,0,0),px(L,0,0),px(L,W,0),px(0,W,0)],'#e5ecdf','#879989'));
+ // Terreinranden en een lichte grid suggereren de terreinmaat.
+ for(let x=0;x<=L;x+=10)shapes.push('<path d="M'+px(x,0,0).join(' ')+' L'+px(x,W,0).join(' ')+'" stroke="#c3d0c2" stroke-width="1" opacity=".65"/>');
+ for(let y=0;y<=W;y+=10)shapes.push('<path d="M'+px(0,y,0).join(' ')+' L'+px(L,y,0).join(' ')+'" stroke="#c3d0c2" stroke-width="1" opacity=".65"/>');
+ const sorted=[...layout.units].sort((a,b)=>(a.x+a.y)-(b.x+b.y));
+ for(const unit of sorted){
+  const rotated=((Number(unit.rotation)||0)%180+180)%180===90;
+  const w=rotated?uW:uL,h=rotated?uL:uW,x=Number(unit.x)||0,y=Number(unit.y)||0,z=floors*2.8;
+  const A=px(x,y,0),B=px(x+w,y,0),C=px(x+w,y+h,0),D=px(x,y+h,0);
+  const At=px(x,y,z),Bt=px(x+w,y,z),Ct=px(x+w,y+h,z),Dt=px(x,y+h,z);
+  const selected=layout.selected===unit.id;
+  const wall=selected?'#d9eee7':'#d4c8b3',side=selected?'#9dc8bd':'#b2a38b',end=selected?'#b8ddd2':'#c2b49c';
+  shapes.push(poly([B,C,Ct,Bt],side));
+  shapes.push(poly([D,C,Ct,Dt],end));
+  shapes.push(poly([A,B,Bt,At],wall));
+  shapes.push(poly([At,Bt,Ct,Dt],selected?'#557a70':'#647b67'));
+  // Gevelramen op de lange zichtzijde, met ritme per bouwlaag.
+  for(let fl=0;fl<floors;fl++)for(let n=0;n<Math.max(2,Math.floor(w/3));n++){
+   const xx=x+w*(n+0.5)/Math.max(2,Math.floor(w/3)),zz=fl*2.8+1.0;
+   const p1=px(xx-.48,y-.015,zz),p2=px(xx+.48,y-.015,zz),p3=px(xx+.48,y-.015,zz+1.15),p4=px(xx-.48,y-.015,zz+1.15);
+   shapes.push(poly([p1,p2,p3,p4],'#557b79','#edf2e9'));
+  }
+  // Markering op het dak toont nummer en draairichting.
+  const label=px(x+w/2,y+h/2,z+.08);
+  shapes.push('<text x="'+label[0]+'" y="'+label[1]+'" font-size="13" font-weight="700" text-anchor="middle" fill="#fff">'+unit.id.replace('unit-','')+(rotated?' · 90°':' · 0°')+'</text>');
+ }
+ const corners=[px(0,0,0),px(L,0,0),px(L,W,0),px(0,W,0)];
+ const minX=Math.min(...corners.map(p=>p[0]))-80,maxX=Math.max(...corners.map(p=>p[0]))+80,minY=35,maxY=Math.max(...corners.map(p=>p[1]))+65;
+ const viewW=maxX-minX,viewH=maxY-minY;
+ return '<svg class="proposal-visual iso-visual site-mass-visual" viewBox="'+minX+' '+minY+' '+viewW+' '+viewH+'" role="img" aria-label="3D terreinimpressie met '+layout.units.length+' units op hun actuele posities en draairichtingen"><defs><linearGradient id="siteMassSky" x2="0" y2="1"><stop stop-color="#f8faf7"/><stop offset="1" stop-color="#e8f0ec"/></linearGradient></defs><rect x="'+minX+'" y="'+minY+'" width="'+viewW+'" height="'+viewH+'" rx="12" fill="url(#siteMassSky)"/>'+shapes.join('')+'<text x="'+(minX+24)+'" y="'+(minY+25)+'" font-size="14" font-weight="700" fill="#315c55">3D-TERREINIMPRESSIE · '+layout.units.length+' UNITS · '+floors+' BOUWLAGEN</text><text x="'+(minX+24)+'" y="'+(minY+44)+'" font-size="11" fill="#667b72">De weergave volgt de actuele terreinindeling</text></svg>';
+}
+const conceptViewBefore3D=conceptView;
+conceptView=function(){
+ let html=conceptViewBefore3D();
+ const f=conceptFit(conceptData());
+ if(!f.ready)return html;
+ const start=html.indexOf('<div class="card"><div class="eyebrow">Massa-impressie</div>');
+ if(start<0)return html;
+ const end=html.indexOf('<div class="notice"><strong>Locatie- en haalbaarheidsvoorbehoud.</strong>',start);
+ if(end<0)return html;
+ const mass='<div class="card"><div class="eyebrow">Massa-impressie</div><h2>3D-weergave van uw terreinindeling</h2>'+conceptSiteMassImpression(f)+'<p class="muted">De 3D-impressie toont de actuele posities, onderlinge oriëntaties en gekozen bouwlagen van de units. Indicatieve visualisatie; geen maatvaste of constructief goedgekeurde uitwerking.</p></div>';
+ return html.slice(0,start)+mass+html.slice(end);
+};
+
 </script></body></html>
