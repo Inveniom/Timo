@@ -994,7 +994,7 @@ conceptView=function(){
  let html=thimoOldConceptView();
  const counts=thimoFloorCounts(),floors=thimoFloorCount(),sum=counts.reduce((a,b)=>a+b,0),total=Math.max(1,Number(selectedUnitCount)||1);
  const buttons=counts.map((n,i)=>'<button type="button" class="thimo-floor-tab '+(i===thimoActiveFloor?'active':'')+'" data-thimo-floor="'+i+'">Bouwlaag '+(i+1)+' <b>'+n+'</b></button>').join('');
- const editor='<section class="card thimo-floor-editor"><div class="eyebrow">Indeling per verdieping</div><h2>Kies en bewerk de bouwlaag</h2><p>Elke bouwlaag heeft een eigen indeling. Kies hieronder de verdieping en versleep of draai de units onafhankelijk van de andere lagen.</p><div class="thimo-floor-tabs">'+buttons+'</div><div class="fields thimo-floor-counts">'+counts.map((n,i)=>'<div><label for="thimoFloorCount'+i+'">Aantal units · bouwlaag '+(i+1)+'</label><input id="thimoFloorCount'+i+'" type="number" min="0" max="'+total+'" step="1" value="'+n+'" data-thimo-floor-count="'+i+'"></div>').join('')+'</div><p class="thimo-floor-total '+(sum===total?'':'warning')+'">Verdeling: <strong>'+sum+' van '+total+' gekozen units</strong>'+(sum===total?' · verdeling klopt':' · pas de aantallen aan zodat het totaal gelijk is aan het gekozen aantal')+'</p></section>';
+ const editor='<section class="card thimo-floor-editor"><div class="eyebrow">Indeling per verdieping</div><h2>Verdeling van de gekozen units</h2><p>Stap 1 bepaalt het totale aantal: <strong>'+total+' units</strong>. Verdeel deze units over de bouwlagen. Het totaal hieronder blijft altijd gelijk aan stap 1; een wijziging op één laag wordt automatisch verrekend met een andere laag.</p><div class="thimo-floor-tabs">'+buttons+'</div><div class="fields thimo-floor-counts">'+counts.map((n,i)=>'<div><label for="thimoFloorCount'+i+'">Aantal units · bouwlaag '+(i+1)+'</label><input id="thimoFloorCount'+i+'" type="number" min="0" max="'+total+'" step="1" value="'+n+'" data-thimo-floor-count="'+i+'"></div>').join('')+'</div><p class="thimo-floor-total">Verdeling: <strong>'+sum+' van '+total+' gekozen units</strong> · totaal is gekoppeld aan stap 1</p></section>';
  html=html.replace('</main>',editor+'</main>');
  if(!html.includes('thimo-floor-editor'))html+=editor;
  return html;
@@ -1020,8 +1020,9 @@ document.addEventListener('change',e=>{
 
 /* Stap 1 is leidend: het totale woningenaantal wordt nooit door de verdeling per bouwlaag gewijzigd. */
 function thimoStepOneTotal(){
- const n=Math.floor(Number(p?.count));
- return Number.isFinite(n)&&n>0?Math.min(100,n):Math.max(1,Number(selectedUnitCount)||1);
+ /* Stap 1 in de klantomgeving is unitConfigurator(): het veld [data-unit-count]. */
+ const n=Math.floor(Number(selectedUnitCount));
+ return Number.isFinite(n)&&n>0?Math.min(100,n):1;
 }
 function thimoSyncStepOneTotal(){
  const total=thimoStepOneTotal();
