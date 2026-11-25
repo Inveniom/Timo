@@ -882,4 +882,61 @@ conceptView=function(){
  return html.replace(/<div class="card"><div class="eyebrow">Massa-impressie<\/div>[\s\S]*?<\/div>(?=<div class="notice"><strong>Locatie- en haalbaarheidsvoorbehoud)/,'');
 };
 
+
+/* Afzonderlijke unitverdeling per bouwlaag */
+function thimoFloorCount(){
+ return Math.max(1,Math.min(4,Number.parseInt(String(unitConfiguration.floors||'1').match(/[0-9]+/)?.[0]||'1',10)));
+}
+function thimoFloorCounts(){
+ const floors=thimoFloorCount(),total=Math.max(1,Number(selectedUnitCount)||1);
+ let counts=Array.isArray(unitConfiguration.floorUnitCounts)?unitConfiguration.floorUnitCounts.map(n=>Math.max(0,Math.floor(Number(n)||0))):[];
+ if(counts.length!==floors||counts.reduce((a,b)=>a+b,0)!==total){
+  counts=Array.from({length:floors},(_,i)=>Math.floor(total/floors)+(i<total%floors?1:0));
+  unitConfiguration.floorUnitCounts=counts;
+  if(typeof saveClientUnitSettings==='function')saveClientUnitSettings();
+ }
+ return counts;
+}
+const conceptFitBeforeFloorCounts=conceptFit;
+conceptFit=function(c){
+ const result=conceptFitBeforeFloorCounts(c);
+ if(!result.ready)return result;
+ const counts=thimoFloorCounts(),maxPerFloor=Math.max(0,...counts);
+ return {...result,required:maxPerFloor,totalRequired:counts.reduce((a,b)=>a+b,0),floorCounts:counts,fit:result.capacity>=maxPerFloor,shortage:Math.max(0,maxPerFloor-result.capacity)};
+};
+const conceptViewBeforeFloorCounts=conceptView;
+conceptView=function(){
+ let html=conceptViewBeforeFloorCounts();
+ const counts=thimoFloorCounts(),floors=thimoFloorCount(),total=counts.reduce((a,b)=>a+b,0);
+ const controls='<div class="card floor-count-card"><div class="eyebrow">Verdeling over de bouwlagen</div><h2>Hoeveel units komen op iedere laag?</h2><p>Geef per bouwlaag het aantal units op. De aantallen tellen samen op tot het totale projectaantal. De terreinplattegrond toont de benodigde footprint op basis van de laag met de meeste units.</p><div class="floor-count-grid">'+counts.map((n,i)=>'<div><label for="floorUnits'+(i+1)+'">Bouwlaag '+(i+1)+'</label><input id="floorUnits'+(i+1)+'" type="number" min="0" max="100" step="1" data-floor-units="'+i+'" value="'+n+'"><small>Units op bouwlaag '+(i+1)+'</small></div>').join('')+'</div><div class="floor-count-total"><strong>Totaal project: '+total+' units</strong><span>'+floors+' bouwlaag/bouwlagen · maximaal '+Math.max(0,...counts)+' units op één laag</span></div></div>';
+ const anchor='</div><div class="concept-tabs-note">Actieve configuratie:';
+ const i=html.indexOf(anchor);
+ if(i>=0)html=html.slice(0,i+6)+controls+html.slice(i+6);
+ else html=html.replace('<div class="card"><div class="eyebrow">Terreinmaten en uitgangspunten</div>',controls+'<div class="card"><div class="eyebrow">Terreinmaten en uitgangspunten</div>');
+ html=html.replace('· '+selectedUnitCount+' units ·','· '+total+' units totaal ·');
+ return html;
+};
+document.addEventListener('change',e=>{
+ if(!e.target?.hasAttribute('data-floor-units'))return;
+ const index=Number(e.target.dataset.floorUnits),counts=thimoFloorCounts();
+ counts[index]=Math.max(0,Math.min(100,Math.floor(Number(e.target.value)||0)));
+ const total=counts.reduce((a,b)=>a+b,0);
+ if(total<1){counts[index]=1;}
+ unitConfiguration.floorUnitCounts=counts;
+ selectedUnitCount=counts.reduce((a,b)=>a+b,0);
+ localStorage.setItem('timo-unit-count',String(selectedUnitCount));
+ saveClientUnitSettings();
+ render();
+});
+const floorCountStyle=document.createElement('style');
+floorCountStyle.textContent=`
+.floor-count-card{margin:18px 0;border-top:4px solid #1ba59b}
+.floor-count-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:18px 0}
+.floor-count-grid>div{padding:14px;background:#f3f8f7;border:1px solid #dcebe7;border-radius:10px}
+.floor-count-grid input{font-size:18px;font-weight:700}
+.floor-count-grid small{display:block;margin-top:6px}
+.floor-count-total{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 16px;background:#eaf5f1;border-radius:9px;color:#175e5c}
+.floor-count-total span{font-size:13px;color:#55716b}
+`;
+document.head.appendChild(floorCountStyle);
 </script></body></html>
