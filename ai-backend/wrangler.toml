@@ -1,0 +1,8 @@
+name = "timo-agent"
+main = "worker.js"
+compatibility_date = "2026-11-25"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGIN = "https://inveniom.github.io"
+OPENAI_MODEL = "gpt-4.1-mini"
