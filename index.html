@@ -952,5 +952,59 @@ views.Dashboard=function(){
 delete views.Projectbeheer;
 for(const sub of ['AI-vraagfilter','Projectbesluiten','Commerciële kansen','Klantvragen'])delete views[sub];
 if(page==='Projectbeheer'||page==='Concept & terreininpassing')page=role==='staff'?'Dashboard':'AI-assistent';
+
+/* Herstel: navigatie zonder linker AI-assistent-tab, maar behoud de AI-assistent als klantstartscherm. */
+menus.client=[];
+switchRole=function(r){role=r;page=r==='client'?'AI-assistent':'Dashboard';render()};
+
+/* Bouwlaagplanner: elke verdieping heeft een eigen unit-aantal en eigen bewerkbare terreinindeling. */
+let thimoActiveFloor=0;
+function thimoFloorLayoutKey(){return 'thimo-floor-layout-'+selectedClientId+'-'+thimoActiveFloor}
+const thimoOldConceptLayoutKey=conceptLayoutKey;
+conceptLayoutKey=thimoFloorLayoutKey;
+const thimoOldConceptLayout=conceptLayout;
+conceptLayout=function(f){
+ let saved=null;try{saved=JSON.parse(localStorage.getItem(thimoFloorLayoutKey()))}catch{}
+ const valid=saved&&Array.isArray(saved.units)&&saved.units.length===f.required&&Number(saved.unitLength)===Number(f.unitLength)&&Math.abs(Number(saved.unitWidth)-Number(f.unitWidth))<0.001;
+ if(valid)return saved;
+ const o=f.orientation||{cols:1,rows:1,a:f.unitLength,b:f.unitWidth,rot:false},cols=Math.max(1,o.cols||1),units=[];
+ for(let i=0;i<f.required;i++){const col=i%cols,row=Math.floor(i/cols);units.push({id:'unit-'+(i+1),x:f.setback+col*(o.a+f.gap),y:f.setback+row*(o.b+f.gap),rotation:o.rot?90:0})}
+ const next={units,selected:units[0]?.id||null,unitLength:f.unitLength,unitWidth:f.unitWidth};
+ saveConceptLayout(next);return next;
+};
+const thimoOldConceptFit=conceptFit;
+conceptFit=function(c){
+ const f=thimoOldConceptFit(c);if(!f.ready)return f;
+ const counts=thimoFloorCounts(),count=Math.max(0,Number(counts[thimoActiveFloor]||0));
+ return {...f,required:count,fit:f.capacity>=count,shortage:Math.max(0,count-f.capacity),floorCounts:counts,activeFloor:thimoActiveFloor};
+};
+const thimoOldConceptView=conceptView;
+conceptView=function(){
+ let html=thimoOldConceptView();
+ const counts=thimoFloorCounts(),floors=thimoFloorCount(),sum=counts.reduce((a,b)=>a+b,0),total=Math.max(1,Number(selectedUnitCount)||1);
+ const buttons=counts.map((n,i)=>'<button type="button" class="thimo-floor-tab '+(i===thimoActiveFloor?'active':'')+'" data-thimo-floor="'+i+'">Bouwlaag '+(i+1)+' <b>'+n+'</b></button>').join('');
+ const editor='<section class="card thimo-floor-editor"><div class="eyebrow">Indeling per verdieping</div><h2>Kies en bewerk de bouwlaag</h2><p>Elke bouwlaag heeft een eigen indeling. Kies hieronder de verdieping en versleep of draai de units onafhankelijk van de andere lagen.</p><div class="thimo-floor-tabs">'+buttons+'</div><div class="fields thimo-floor-counts">'+counts.map((n,i)=>'<div><label for="thimoFloorCount'+i+'">Aantal units · bouwlaag '+(i+1)+'</label><input id="thimoFloorCount'+i+'" type="number" min="0" max="'+total+'" step="1" value="'+n+'" data-thimo-floor-count="'+i+'"></div>').join('')+'</div><p class="thimo-floor-total '+(sum===total?'':'warning')+'">Verdeling: <strong>'+sum+' van '+total+' gekozen units</strong>'+(sum===total?' · verdeling klopt':' · pas de aantallen aan zodat het totaal gelijk is aan het gekozen aantal')+'</p></section>';
+ html=html.replace('</main>',editor+'</main>');
+ if(!html.includes('thimo-floor-editor'))html+=editor;
+ return html;
+};
+const thimoFloorStyle=document.createElement('style');
+thimoFloorStyle.textContent='.floor-count-card{display:none!important}.thimo-floor-editor{margin:22px 0;border-top:4px solid #25877d}.thimo-floor-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.thimo-floor-tab{border:1px solid #cbded8;background:#f3f8f6;color:#315c55;padding:10px 14px;border-radius:9px;cursor:pointer}.thimo-floor-tab.active{background:#174f4b;color:white;border-color:#174f4b}.thimo-floor-tab b{margin-left:7px}.thimo-floor-counts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}.thimo-floor-total{padding:12px 14px;background:#edf6f2;border-radius:8px;color:#245b4e}.thimo-floor-total.warning{background:#fff2e8;color:#8a4c20}';
+document.head.appendChild(thimoFloorStyle);
+document.addEventListener('click',e=>{
+ const b=e.target.closest?.('[data-thimo-floor]');if(!b)return;
+ e.preventDefault();e.stopImmediatePropagation();
+ thimoActiveFloor=Math.max(0,Math.min(thimoFloorCount()-1,Number(b.dataset.thimoFloor)||0));render();
+},true);
+document.addEventListener('change',e=>{
+ const el=e.target;if(!el?.hasAttribute('data-thimo-floor-count'))return;
+ e.preventDefault();e.stopImmediatePropagation();
+ const i=Number(el.dataset.thimoFloorCount),counts=thimoFloorCounts();
+ counts[i]=Math.max(0,Math.min(100,Math.floor(Number(el.value)||0)));
+ unitConfiguration.floorUnitCounts=counts;
+ saveClientUnitSettings();
+ render();
+},true);
+
 render();
 </script></body></html>
