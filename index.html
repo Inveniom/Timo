@@ -500,9 +500,30 @@ function productDatabaseView(){
  return title('Medewerkersomgeving','Productdatabase en kostprijzen','Eén overzicht van de standaardunits, hun onderdelen en bijkomende projectkosten.')+'<div class="notice"><strong>ALLE BEDRAGEN ZIJN FICTIEF.</strong> Uitsluitend bedoeld om de opbouw van de productdatabase en calculatie te demonstreren. Het zijn geen werkelijke Thimo365-inkoopprijzen, verkoopprijzen, marges of offertes.</div>'+Object.entries(demoUnitCosts).map(([code,u])=>'<div class="card product-unit-summary"><strong>'+code+'</strong><span>'+demoEuro(u.total)+' excl. btw per unit</span><small>'+u.label+'</small></div>').join('')+unitCards+logistics+'<div class="card"><h2>Algemene product- en projectkennis</h2><p>Onderstaand onderdeel bevat de centrale kennisrecords die Thimo als basis gebruikt. Projectspecifieke informatie kan hierop aanvullen.</p>'+globalKnowledgeView()+'</div>';
 }
 function staffProjectHub(){
- const cards=[['AI-vraagfilter','Bundel en beoordeel klantvragen','AI-vraagfilter'],['Projectbesluiten','Leg besluiten en acties vast','Projectbesluiten'],['Commerciële kansen','Volg kansen en vervolgstappen','Commerciële kansen'],['Klantvragen','Behandel openstaande vragen','Klantvragen']];
- return title('Medewerkersomgeving','Projectbeheer','De dagelijkse projecttools zijn samengebracht onder één hoofdtab.')+'<div class="grid">'+cards.map(c=>'<div class="card"><h2>'+c[0]+'</h2><p>'+c[1]+'</p>'+button('Open onderdeel','go:'+c[2])+'</div>').join('')+'</div><div class="card"><h2>Openstaande klantvragen</h2>'+(K.queue.filter(q=>q.status==='Open').map(q=>'<div class="line"><span>'+esc(q.text)+'</span><span class="tag">Open</span></div>').join('')||'<p>Geen openstaande vragen in deze demo.</p>')+'</div>';
+ const ids=Object.keys(demoClients),selected=staffProjectSelection&&demoClients[staffProjectSelection]?staffProjectSelection:(ids.includes(selectedClientId)?selectedClientId:ids[0]);
+ const project=demoClients[selected],cfg=(()=>{try{return JSON.parse(localStorage.getItem('timo-client-config-'+selected)||'{}')}catch{return {}}})();
+ const unit=cfg.unit||project.unit||'Thimo365',count=Number(cfg.count)||project.units||0,options=cfg.options||{},floors=options.floors||'1 bouwlaag';
+ const chats=K.chats[selected]||[],records=(K.records||[]).filter(r=>r.project===selected),released=records.filter(r=>r.approved&&r.visible),queue=(K.queue||[]).filter(q=>q.project===selected);
+ const latest=chats.length?chats[chats.length-1]:null;
+ const phase=project.status||'Nieuwe aanvraag';
+ const clientCards=ids.map(id=>{const c=demoClients[id],cc=(()=>{try{return JSON.parse(localStorage.getItem('timo-client-config-'+id)||'{}')}catch{return {}}})(),n=Number(cc.count)||c.units||0,u=cc.unit||c.unit||'Thimo365',q=(K.queue||[]).filter(x=>x.project===id&&x.status==='Open').length;
+ return '<div class="card project-summary"><div class="eyebrow">'+esc(c.organisation||'Project')+'</div><h3>'+esc(c.name)+'</h3><p>'+esc(c.location||'Locatie nog niet ingevuld')+'</p><div class="project-facts"><span><strong>'+n+'</strong> units</span><span><strong>'+esc(u)+'</strong> type</span><span><strong>'+q+'</strong> open vragen</span></div><p><span class="tag">'+esc(c.status||'Nieuwe aanvraag')+'</span></p><button class="alt" data-act="project-open:'+id+'">Bekijk project</button></div>';
+ }).join('');
+ return title('Medewerkersomgeving','Projectbeheer','Projectoverzicht op basis van de demo-klanten, hun gekozen configuraties, gesprekken en vastgelegde projectinformatie.')+
+ '<div class="grid">'+metric(ids.length,'Projecten')+metric(ids.reduce((n,id)=>n+(K.chats[id]||[]).length,0),'Gespreksbeurten')+metric((K.queue||[]).filter(q=>q.status==='Open').length,'Open klantvragen')+metric((K.records||[]).filter(r=>r.approved).length,'Gevalideerde kennisrecords')+'</div>'+
+ '<div class="card"><div class="eyebrow">Projectportfolio</div><h2>Alle klantprojecten</h2><div class="grid">'+clientCards+'</div></div>'+
+ '<div class="card"><div class="eyebrow">Projectdossier</div><h2>Project selecteren</h2><div class="fields"><div><label for="staffProjectSelect">Klant / project</label><select id="staffProjectSelect">'+ids.map(id=>'<option value="'+id+'" '+(id===selected?'selected':'')+'>'+esc(demoClients[id].name)+'</option>').join('')+'</select></div><div><label>Projectfase</label><div class="customer-meta">'+esc(phase)+'</div></div></div>'+
+ '<div class="grid">'+metric(count,'Gekozen aantal units')+metric(unit,'Unitvariant')+metric(floors,'Bouwlagen')+metric(chats.length,'Gespreksbeurten')+'</div>'+
+ '<div class="project-facts"><span><strong>Organisatie</strong><br>'+esc(project.organisation||'Niet ingevuld')+'</span><span><strong>Locatie</strong><br>'+esc(project.location||'Niet ingevuld')+'</span><span><strong>Configuratie</strong><br>'+esc(Object.entries(options).filter(([k])=>k!=='floors').map(([k,v])=>k+': '+v).join(' · ')||'Nog geen aanvullende keuzes')+'</span></div></div>'+
+ '<div class="grid"><div class="card"><h2>Projectinformatie</h2><p>'+records.length+' kennisrecords vastgelegd, waarvan '+released.length+' gevalideerd en vrijgegeven voor klantgebruik.</p>'+records.map(r=>'<div class="line"><div><strong>'+esc(r.subject)+'</strong><p class="muted">'+esc(r.value)+'</p></div><span class="tag">'+(r.approved?'Gevalideerd':'Concept')+'</span></div>').join('')+'</div>'+
+ '<div class="card"><h2>Opvolging en klantcontact</h2><p>'+queue.length+' geregistreerde klantvragen; '+queue.filter(q=>q.status==='Open').length+' staan nog open.</p>'+(queue.map(q=>'<div class="line"><div>'+esc(q.text)+'</div><span class="tag">'+esc(q.status)+'</span></div>').join('')||'<p class="muted">Geen aparte klantvragen geregistreerd.</p>')+(latest?'<p class="muted">Laatste gespreksbeurt: '+esc(String(latest.text||latest.content||'').slice(0,220))+'</p>':'<p class="muted">Nog geen gesprek vastgelegd.</p>')+'</div></div>'+
+ '<div class="actions">'+button('Open klantomgeving','project-client:'+selected,true)+button('Open projectdatabase','project-kb:'+selected,true)+'</div>'+
+ '<p class="muted">Demo-informatie is indicatief en wordt lokaal in deze browser opgeslagen. Projectfasen, aantallen en configuraties zijn geen bevestigde contractuele afspraken.</p>';
 }
+let staffProjectSelection=selectedClientId;
+document.addEventListener('change',e=>{if(e.target.id==='staffProjectSelect'){staffProjectSelection=e.target.value;render()}});
+document.addEventListener('click',e=>{const act=e.target.closest('[data-act]')?.dataset.act||'';if(act.startsWith('project-open:')){staffProjectSelection=act.slice(13);render()}else if(act.startsWith('project-client:')){selectedClientId=act.slice(15);localStorage.setItem('timo-selected-client',selectedClientId);loadClientUnitSettings();role='client';page='AI-assistent';render()}else if(act.startsWith('project-kb:')){kp=act.slice(11);role='staff';page='Productdatabase';render()}});
+
 function compactStaffDashboard(){
  return title('Medewerkersomgeving','Thimo365 projectregie','Een helder startpunt voor klanten, producten en projectacties.')+'<div class="grid">'+metric(Object.keys(demoClients).length,'Demo-klanten')+metric(Object.values(K.chats).reduce((a,x)=>a+x.length,0),'Gespreksbeurten')+metric(K.queue.filter(q=>q.status==='Open').length,'Open vragen')+'</div><div class="grid"><div class="card"><h2>Klanten</h2><p>Bekijk per klant de projectstatus, configuratie en gesprekken.</p>'+button('Naar klanten','go:Klanten')+'</div><div class="card"><h2>Productdatabase</h2><p>Bekijk fictieve kostprijzen per unit en per onderdeel.</p>'+button('Naar productdatabase','go:Productdatabase')+'</div><div class="card"><h2>Projectbeheer</h2><p>Werk klantvragen, besluiten en commerciële acties bij.</p>'+button('Naar projectbeheer','go:Projectbeheer')+'</div></div>';
 }
@@ -857,15 +878,8 @@ function conceptSiteMassImpression(f){
 }
 const conceptViewBefore3D=conceptView;
 conceptView=function(){
- let html=conceptViewBefore3D();
- const f=conceptFit(conceptData());
- if(!f.ready)return html;
- const start=html.indexOf('<div class="card"><div class="eyebrow">Massa-impressie</div>');
- if(start<0)return html;
- const end=html.indexOf('<div class="notice"><strong>Locatie- en haalbaarheidsvoorbehoud.</strong>',start);
- if(end<0)return html;
- const mass='<div class="card"><div class="eyebrow">Massa-impressie</div><h2>3D-weergave van uw terreinindeling</h2>'+conceptSiteMassImpression(f)+'<p class="muted">De 3D-impressie toont de actuele posities, onderlinge oriëntaties en gekozen bouwlagen van de units. Indicatieve visualisatie; geen maatvaste of constructief goedgekeurde uitwerking.</p></div>';
- return html.slice(0,start)+mass+html.slice(end);
+ const html=conceptViewBefore3D();
+ return html.replace(/<div class="card"><div class="eyebrow">Massa-impressie<\/div>[\s\S]*?<\/div>(?=<div class="notice"><strong>Locatie- en haalbaarheidsvoorbehoud)/,'');
 };
 
 </script></body></html>
