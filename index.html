@@ -939,4 +939,18 @@ floorCountStyle.textContent=`
 .floor-count-total span{font-size:13px;color:#55716b}
 `;
 document.head.appendChild(floorCountStyle);
+
+/* Vereenvoudigde medewerkers- en klantnavigatie: Projectbeheer en het losse klanttabblad vervallen. */
+menus.staff=['Dashboard','Klanten','Productdatabase'];
+menus.client=['AI-assistent'];
+delete views['Concept & terreininpassing'];
+views.Dashboard=function(){
+ return title('Medewerkersomgeving','Thimo365 projectregie','Een helder startpunt voor klanten en productinformatie.')+
+ '<div class="grid">'+metric(Object.keys(demoClients).length,'Demo-klanten')+metric(Object.values(K.chats).reduce((a,x)=>a+x.length,0),'Gespreksbeurten')+metric(K.queue.filter(q=>q.status==='Open').length,'Open vragen')+'</div>'+
+ '<div class="grid"><div class="card"><h2>Klanten</h2><p>Bekijk per klant de projectstatus, configuratie en gesprekken.</p>'+button('Naar klanten','go:Klanten')+'</div><div class="card"><h2>Productdatabase</h2><p>Bekijk de productinformatie en indicatieve kostprijsopbouw.</p>'+button('Naar productdatabase','go:Productdatabase')+'</div></div>';
+};
+delete views.Projectbeheer;
+for(const sub of ['AI-vraagfilter','Projectbesluiten','Commerciële kansen','Klantvragen'])delete views[sub];
+if(page==='Projectbeheer'||page==='Concept & terreininpassing')page=role==='staff'?'Dashboard':'AI-assistent';
+render();
 </script></body></html>
