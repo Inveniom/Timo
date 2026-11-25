@@ -1208,5 +1208,61 @@ document.addEventListener('input',e=>{
  try{localStorage.setItem('thimo-finance-'+id,JSON.stringify(current))}catch(err){console.error('Financiële wijziging kon niet lokaal worden opgeslagen',err)}
 },true);
 
+
+/* Productdatabase: bewerkbare kostprijsregels met lokale opslag per browser. */
+function thimoLoadProductCosts(){
+ try{
+  const saved=JSON.parse(localStorage.getItem('thimo-product-costs-v1')||'null');
+  if(!saved)return;
+  Object.keys(demoUnitCosts).forEach(code=>{
+   const rows=saved.units?.[code];
+   if(Array.isArray(rows))demoUnitCosts[code].parts.forEach((part,i)=>{if(Number.isFinite(Number(rows[i])))part[1]=Math.max(0,Number(rows[i]))});
+  });
+  if(Array.isArray(saved.projectCosts))projectCostItems.forEach((row,i)=>{
+   const v=saved.projectCosts[i];if(Array.isArray(v)){row[1]=Math.max(0,Number(v[0])||0);row[2]=Math.max(0,Number(v[1])||0)}
+  });
+ }catch(err){console.warn('Productkostendatabase kon niet worden geladen',err)}
+}
+function thimoSaveProductCosts(){
+ const data={units:{},projectCosts:projectCostItems.map(x=>[x[1],x[2]])};
+ Object.entries(demoUnitCosts).forEach(([code,u])=>data.units[code]=u.parts.map(x=>Number(x[1])||0));
+ try{localStorage.setItem('thimo-product-costs-v1',JSON.stringify(data))}catch(err){console.error('Opslaan productkostprijzen mislukt',err)}
+}
+thimoLoadProductCosts();
+function productDatabaseView(){
+ const unitCards=Object.entries(demoUnitCosts).map(([code,u])=>{
+  const sum=u.parts.reduce((a,x)=>a+Number(x[1]||0),0);
+  return '<div class="card product-cost-card"><div class="eyebrow">Standaardunit · fictieve kostprijs</div><h2>'+code+' · '+u.label+'</h2><div class="product-unit-total">'+demoEuro(sum)+' <small>per unit excl. btw · totaal onderdelen</small></div><table><thead><tr><th>Onderdeel</th><th style="text-align:right">Bewerkbaar bedrag per unit</th></tr></thead><tbody>'+u.parts.map((x,i)=>'<tr><td>'+esc(x[0])+'</td><td style="text-align:right"><label class="product-cost-input"><span>€</span><input type="number" min="0" step="0.01" value="'+Number(x[1])+'" data-product-unit="'+code+'" data-product-part="'+i+'" aria-label="'+esc(code+' '+x[0])+'"></label></td></tr>').join('')+'<tr><th>Totaal onderdelen</th><th style="text-align:right" data-product-unit-total="'+code+'">'+demoEuro(sum)+'</th></tr></tbody></table><p class="muted">Pas bedragen per onderdeel aan. Het totaal wordt automatisch uit de onderdelen berekend.</p></div>';
+ }).join('');
+ const logistics='<div class="card"><h2>Transport, plaatsing en aansluitingen</h2><p>Deze posten staan los van de fabrieksmatige unitkostprijs.</p><table><thead><tr><th>Kostenonderdeel</th><th style="text-align:right">Variabel per unit</th><th style="text-align:right">Vast per project</th></tr></thead><tbody>'+projectCostItems.map((x,i)=>'<tr><td>'+esc(x[0])+'</td><td><label class="product-cost-input"><span>€</span><input type="number" min="0" step="0.01" value="'+Number(x[1])+'" data-product-project="'+i+'" data-product-column="1" aria-label="'+esc(x[0])+' variabel per unit"></label></td><td><label class="product-cost-input"><span>€</span><input type="number" min="0" step="0.01" value="'+Number(x[2])+'" data-product-project="'+i+'" data-product-column="2" aria-label="'+esc(x[0])+' vast per project"></label></td></tr>').join('')+'</tbody></table><p class="muted">Bedragen exclusief btw. Variabele bedragen worden per unit gerekend; vaste bedragen per project.</p></div>';
+ return title('Medewerkersomgeving','Productdatabase en kostprijzen','Bewerk de onderdelen van iedere standaardunit en de bijkomende projectkosten. Wijzigingen worden lokaal in deze browser opgeslagen.')+'<div class="notice"><strong>ALLE BEDRAGEN ZIJN FICTIEF.</strong> Dit zijn demo-aannames, geen werkelijke inkoopprijzen, verkoopprijzen, marges of offertes.</div><div class="notice">Je kunt bedragen rechtstreeks in de velden wijzigen. De unit-totalen worden opgeteld uit de onderdelen. Gebruik de knop onderaan om alle fictieve standaardbedragen te herstellen.</div>'+unitCards+logistics+'<div class="actions"><button type="button" class="alt" data-product-cost-reset>Herstel fictieve standaardbedragen</button></div><p class="muted">Opslag: alleen in deze browser en op dit apparaat. De gegevens worden niet automatisch gedeeld met andere medewerkers.</p><div class="card"><h2>Algemene product- en projectkennis</h2><p>Onderstaand onderdeel bevat de centrale kennisrecords die Thimo als basis gebruikt. Projectspecifieke informatie kan hierop aanvullen.</p>'+globalKnowledgeView()+'</div>';
+}
+document.addEventListener('input',e=>{
+ const el=e.target;
+ if(el?.hasAttribute('data-product-unit')){
+  const code=el.dataset.productUnit,i=Number(el.dataset.productPart),u=demoUnitCosts[code];
+  if(!u||!Number.isInteger(i)||!u.parts[i])return;
+  u.parts[i][1]=Math.max(0,Number(el.value)||0);thimoSaveProductCosts();
+  const sum=u.parts.reduce((a,x)=>a+Number(x[1]||0),0),target=document.querySelector('[data-product-unit-total="'+code+'"]');
+  if(target)target.textContent=demoEuro(sum);
+  const heading=el.closest('.product-cost-card')?.querySelector('.product-unit-total');
+  if(heading)heading.innerHTML=demoEuro(sum)+' <small>per unit excl. btw · totaal onderdelen</small>';
+ }
+ if(el?.hasAttribute('data-product-project')){
+  const i=Number(el.dataset.productProject),col=Number(el.dataset.productColumn);
+  if(!Number.isInteger(i)||!projectCostItems[i]||(col!==1&&col!==2))return;
+  projectCostItems[i][col]=Math.max(0,Number(el.value)||0);thimoSaveProductCosts();
+ }
+},true);
+document.addEventListener('click',e=>{
+ if(e.target?.closest?.('[data-product-cost-reset]')){
+  try{localStorage.removeItem('thimo-product-costs-v1')}catch{}
+  location.reload();
+ }
+},true);
+const thimoProductCostStyle=document.createElement('style');
+thimoProductCostStyle.textContent='.product-cost-input{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin:0;white-space:nowrap}.product-cost-input input{width:145px;min-width:100px;text-align:right;padding:9px 10px}.product-cost-card table td,.product-cost-card table th{vertical-align:middle}.product-unit-total{font-size:24px;font-weight:750;margin:12px 0}.product-unit-total small{font-size:12px;font-weight:500;color:#66756b}';
+document.head.appendChild(thimoProductCostStyle);
+
 render();
 </script></body></html>
