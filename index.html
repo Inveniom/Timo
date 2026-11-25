@@ -89,7 +89,7 @@ async function sendBot(q){
  try{
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),35000);
   let response;try{response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,knowledge}),signal:controller.signal})}finally{clearTimeout(timer)}
-  const data=await response.json();if(!response.ok||!data.answer)throw new Error(data.error||'Worker reageert niet (HTTP '+response.status+')');
+  const data=await response.json();if(!response.ok||!data.answer)throw new Error([data.error||'Worker reageert niet (HTTP '+response.status+')',data.detail||'',data.upstream_code?'Code: '+data.upstream_code:'',data.code?'HTTP '+data.code:''].filter(Boolean).join(' — '));
   turn.answer=data.answer;turn.proposal=data.proposal||null;botConnectionStatus='Antwoord ontvangen via Timo AI.';ks();render();
  }catch(error){turn.answer='De AI-agent kon geen antwoord ophalen: '+(error.name==='AbortError'?'de aanvraag duurde te lang.':error.message)+'. Controleer het Worker-adres, de GitHub Actions-uitrol en de Cloudflare/OpenAI-instellingen.';botConnectionStatus='Verbinding mislukt.';ks();render()}
 }
