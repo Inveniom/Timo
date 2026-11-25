@@ -39,6 +39,7 @@ function migrate(){if(!K.generalInitialized){K.records.push(...generalSeed());K.
 const scopeNames=()=>({...names(),general:'Algemene productkennisbank'});
 const staffKnowledgeView=()=>{let html=kbview();return html.replace('</select><p class="muted">Uitsluitend fictieve gegevens.',(kp==='general'?'<option value="general" selected>Algemene productkennisbank</option>':'<option value="general">Algemene productkennisbank</option>')+'</select><p class="muted">Uitsluitend fictieve gegevens.').replace('Projectspecifieke informatie</label>','Kennis of projectinformatie</label>')};
 function botLookup(q,project){const n=' '+norm(q)+' ';const matches=K.records.filter(r=>(r.project===project||r.project==='general')&&r.approved&&r.visible&&[r.subject,...r.aliases.split(',')].map(norm).filter(t=>t.length>=4).some(t=>n.includes(' '+t+' ')));const specific=matches.filter(r=>r.project===project);const general=matches.filter(r=>r.project==='general');const pub=general.filter(r=>r.id.startsWith('public-v6-'));return [...specific,...pub,...general.filter(r=>!pub.includes(r)&&!(pub.length&&['g0','g1','g2'].includes(r.id))&&!specific.some(s=>norm(s.subject)===norm(r.subject)))];}
+let botConnectionStatus='';
 const chatExamples=["Wat is de hoogte van een unit?","Wat zijn de afmetingen van een Thimo365?","Wat is de levertijd?","Kan een Timo op iedere ondergrond worden geplaatst?","Welke aansluitingen moet ik voorbereiden?","Is een bouwvergunning noodzakelijk?","Kan een Timo in een smalle straat worden geplaatst?","Welke eisen gelden voor brandveiligheid?","Hoeveel elektriciteit heeft een Timo nodig?","Is mijn locatie geschikt voor twintig woningen?","Wat zijn de investeringskosten?"];
 function chatView(){
  if(kp==='general')kp='groene';
@@ -52,7 +53,7 @@ function chatView(){
  ${turns.map((t,i)=>`<div class="userbubble">${esc(t.question)}</div><div class="botbubble"><strong>Thimo365 assistent</strong>${t.answer?`<p style="white-space:pre-wrap">${esc(t.answer)}</p>`:t.refs?.length?t.refs.map(ref=>{const r=K.records.find(r=>r.id===ref.id&&r.version===ref.version&&r.approved&&r.visible&&(r.project===kp||r.project==='general'));return r?`<p style="white-space:pre-wrap">${esc(r.value)}</p><div class="source">${r.project==='general'?'Algemene kennisbank':'Projectdatabase'} · ${esc(r.subject)} · ${esc(r.source)} · versie ${r.version}</div>`:'<p>Deze bron is gewijzigd of niet langer vrijgegeven.</p>'}).join(''):'<p class="muted">Nog geen AI-antwoord.</p>'}<div class="actions">${t.sent?'<span class="tag">Voorgelegd aan medewerker</span>':button('Voorleggen aan medewerker','botEsc:'+i,true)}</div></div>`).join('')}</div>
  ${turns.length?'':`<div class="actions">${chatExamples.map((q,i)=>button(q,'botExample:'+i,true)).join('')}</div>`}
  <form id="botform"><label for="botq">Uw vraag</label><div class="botinput"><textarea id="botq" required rows="2" placeholder="Stel uw vraag aan Thimo365..."></textarea><button type="submit">Verstuur</button></div></form>
- <div id="botStatus" class="muted" role="status">Vul het Worker-adres in na de eerste succesvolle Cloudflare-uitrol.</div><div class="actions">${button('Nieuw gesprek','botReset',true)}</div></div>
+ <div id="botStatus" class="muted" role="status">${esc(botConnectionStatus||'Vul het Worker-adres in na de eerste succesvolle Cloudflare-uitrol.')}</div><div class="actions">${button('Nieuw gesprek','botReset',true)}</div></div>
  <div class="notice">De agent geeft een eerste, niet-bindende verkenning. Productgegevens zijn indicatief. Geen actuele kaart-, vergunning-, locatie- of prijstoetsing. Gebruik geen persoonsgegevens of vertrouwelijke informatie.</div>`;
 }
 async function sendBot(q){
@@ -64,7 +65,7 @@ async function sendBot(q){
  const refs=botLookup(q,kp);
  const turn={question:q,refs:refs.map(r=>({id:r.id,version:r.version})),sent:false,answer:''};
  turns.push(turn);ks();render();
- const status=document.getElementById('botStatus');if(status)status.textContent='De AI-agent denkt na…';
+ botConnectionStatus='De AI-agent denkt na…';render();
  const buttonEl=document.querySelector('#botform button[type="submit"]');if(buttonEl)buttonEl.disabled=true;
  const messages=[];
  for(const t of turns.slice(-9)){messages.push({role:'user',content:t.question});if(t.answer)messages.push({role:'assistant',content:t.answer})}
@@ -73,8 +74,8 @@ async function sendBot(q){
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),35000);
   let response;try{response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,knowledge}),signal:controller.signal})}finally{clearTimeout(timer)}
   const data=await response.json();if(!response.ok||!data.answer)throw new Error(data.error||'Worker reageert niet (HTTP '+response.status+')');
-  turn.answer=data.answer;status.textContent='Antwoord ontvangen via Cloudflare AI-agent.';ks();render();
- }catch(error){turn.answer='De AI-agent kon geen antwoord ophalen: '+(error.name==='AbortError'?'de aanvraag duurde te lang.':error.message)+'. Controleer het Worker-adres, de GitHub Actions-uitrol en de Cloudflare/OpenAI-instellingen.';ks();render();const st=document.getElementById('botStatus');if(st)st.textContent='Verbinding mislukt.'}
+  turn.answer=data.answer;botConnectionStatus='Antwoord ontvangen via Cloudflare AI-agent.';ks();render();
+ }catch(error){turn.answer='De AI-agent kon geen antwoord ophalen: '+(error.name==='AbortError'?'de aanvraag duurde te lang.':error.message)+'. Controleer het Worker-adres, de GitHub Actions-uitrol en de Cloudflare/OpenAI-instellingen.';botConnectionStatus='Verbinding mislukt.';ks();render()}
 }
 menus.client=['AI-assistent',...menus.client.filter(t=>!['Projectassistent','AI-assistent'].includes(t))];views['AI-assistent']=chatView;views.Projectassistent=chatView;views.Projectdatabase=staffKnowledgeView;
 const oldLibrary=views.Productbibliotheek;views.Productbibliotheek=()=>oldLibrary()+`<div class="card"><h2>Algemene botkennis beheren</h2><p>Beheer gevalideerde antwoorden die voor alle projecten beschikbaar mogen zijn.</p>${button('Algemene kennisbank beheren','botGeneral')}</div>`;
