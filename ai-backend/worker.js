@@ -56,8 +56,15 @@ export default {
       });
       const raw = await upstream.json();
       if (!upstream.ok) {
-        console.error("OpenAI Responses API error", upstream.status, raw?.error?.type || "");
-        return json({ error: "AI-dienst tijdelijk niet beschikbaar", code: upstream.status }, 502);
+        const upstreamMessage = typeof raw?.error?.message === "string" ? raw.error.message.slice(0, 280) : "Geen nadere foutmelding ontvangen.";
+        const upstreamCode = typeof raw?.error?.code === "string" ? raw.error.code : "";
+        console.error("OpenAI Responses API error", upstream.status, upstreamCode, upstreamMessage);
+        return json({
+          error: "OpenAI-aanvraag mislukt",
+          code: upstream.status,
+          detail: upstreamMessage,
+          upstream_code: upstreamCode || undefined
+        }, 502);
       }
       const outputText = (raw.output || []).flatMap(x => x.content || [])
         .filter(x => x.type === "output_text").map(x => x.text).join("\n").trim();
