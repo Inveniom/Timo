@@ -1,19 +1,28 @@
-# Thimo365 AI-ontwerpagent: activeren
-De GitHub Pages pagina /ontwerpwizard.html bevat nu een AI-chat. Deze werkt pas na het uitrollen van de beveiligde backend. De browser mag nooit een OpenAI API-sleutel bevatten.
+# Timo AI-agent — automatische Cloudflare-uitrol
 
-## Backend uitrollen
-1. Maak een Cloudflare Workers project aan en gebruik de inhoud van worker.js als Worker-code.
-2. Voeg in Cloudflare Workers Settings een **Secret** toe met naam OPENAI_API_KEY en de eigen API-sleutel. Plaats die nooit in GitHub.
-3. Voeg als environment variable ALLOWED_ORIGIN toe met waarde https://inveniom.github.io.
-4. Optioneel: OPENAI_MODEL met een model dat voor het API-account beschikbaar is, standaard gpt-4.1-mini.
-5. Publiceer de Worker en kopieer de HTTPS-URL.
-6. Open https://inveniom.github.io/Timo/ontwerpwizard.html en plak de Worker-URL in AI-serveradres. Daarna kan het gesprek beginnen.
+De AI-agent draait als Cloudflare Worker. De browser bevat nooit de OpenAI API-sleutel.
 
-## Beperkingen en veiligheid
-- De Worker verwerkt een gespreksgeschiedenis van maximaal 18 berichten en vraagt de Responses API om een antwoord. store:false beperkt opslag door de API, maar is geen volledige privacygarantie.
-- Origincontrole en CORS zijn **geen authenticatie** en voorkomen geen directe externe verzoeken. Voor productie: Cloudflare rate limiting, botbescherming, toegangsbeheer, kostenplafonds, loggingbeleid en server-side quota toevoegen.
-- Voer geen herleidbare klantgegevens, vertrouwelijke prijsbladen of contractgegevens in zolang een gegevensbeschermingstoets en verwerkersafspraken ontbreken.
-- Productinformatie in de prompt is ongevalideerd; locatie-, vergunning- en prijstoetsing zijn niet aangesloten. Er wordt geen maatvaste tekening gegenereerd.
-- De bestaande deterministische wizard en het projectvoorstel staan los van de AI-chat. Synchronisatie tussen gesprek en ontwerpresultaat vereist een volgende integratiestap.
-- Geen centrale kennisbank of automatische retrieval: de huidige medewerkerrecords blijven lokaal in de browser.
-- Test de Worker eerst met niet-vertrouwelijke fictieve projecten voordat deze publiek gebruikt wordt.
+## Eenmalige GitHub-inrichting
+
+Voeg in GitHub bij **Inveniom/Timo → Settings → Secrets and variables → Actions** deze drie repository secrets toe:
+
+1. `CLOUDFLARE_API_TOKEN`: Cloudflare API-token met minimaal Workers Scripts: Edit en Account: Read voor het juiste account.
+2. `CLOUDFLARE_ACCOUNT_ID`: het Cloudflare Account ID.
+3. `OPENAI_API_KEY`: de geheime API-sleutel van het OpenAI API-platform (niet een ChatGPT-wachtwoord).
+
+Daarna wordt de Worker automatisch uitgerold bij een wijziging in `ai-backend/`, of handmatig via GitHub → Actions → Deploy Timo AI Worker → Run workflow.
+
+## Worker-adres instellen in Timo
+
+Na de eerste succesvolle workflow toont Wrangler de Worker-URL, normaal gesproken:
+`https://timo-agent.<jouw-workers.dev-subdomein>.workers.dev`
+
+Open de Timo-app op GitHub Pages, ga naar **AI-assistent** en plak dit HTTPS-adres in het veld **Cloudflare Worker-adres**. Het adres wordt alleen in de browser opgeslagen; er staat geen API-sleutel in de pagina.
+
+## Belangrijk
+
+- De toegestane browser-origin staat op `https://inveniom.github.io`.
+- De agent kan algemene kennisbankrecords als context ontvangen, maar lokale projectgegevens en chats worden niet centraal opgeslagen.
+- CORS/origincontrole is geen authenticatie. Stel voor openbaar productiegebruik Cloudflare rate limiting, kostenlimieten en aanvullende toegangsbeveiliging in.
+- Gebruik geen persoonsgegevens of vertrouwelijke documenten zolang privacy- en beveiligingsafspraken niet zijn ingericht.
+- Technische productinformatie is indicatief en moet door de leverancier worden bevestigd.
