@@ -66,9 +66,9 @@ function chatView(){
  return title('Klantomgeving','Timo · van wens naar ontwerp','Vertel wat u wilt realiseren. Timo stelt gerichte vragen en werkt toe naar een visueel concept, specificaties en een indicatieve prijsopgave.')+`<div class="card"><div class="eyebrow">Uw digitale ontwerpadviseur</div><p>Welkom! Ik help u uw woon- of huisvestingsvraag stap voor stap te vertalen naar een eerste ontwerpvoorstel. U hoeft niet alles vooraf te weten.</p>
  <div class="chatlog" aria-live="polite"><div class="botbubble"><strong>Timo</strong><p>Waar denkt u aan? Vertel gerust in uw eigen woorden wat u wilt realiseren, voor wie het bedoeld is en waar het project ongeveer plaatsvindt.</p></div>
  ${turns.map((t,i)=>`<div class="userbubble">${esc(t.question)}</div><div class="botbubble"><strong>Timo</strong>${t.answer?`<p style="white-space:pre-wrap">${esc(t.answer)}</p>`: '<p class="muted">Timo denkt na…</p>'}<div class="actions">${t.sent?'<span class="tag">Voorgelegd aan medewerker</span>':button('Voorleggen aan medewerker','botEsc:'+i,true)}</div></div>`).join('')}</div>
- ${renderCustomerProposal(turns)}
  ${turns.length?'':`<div class="actions">${chatExamples.slice(0,5).map((q,i)=>button(q,'botExample:'+i,true)).join('')}</div>`}
  <form id="botform"><label for="botq">Uw bericht aan Timo</label><div class="botinput"><textarea id="botq" required rows="2" placeholder="Bijvoorbeeld: Ik zoek 12 modulaire woningen voor starters in Utrecht…"></textarea><button type="submit">Verstuur</button></div></form>
+ ${renderCustomerProposal(turns)}
  <div id="botStatus" class="muted" role="status">${esc(botConnectionStatus||'Timo is gekoppeld aan de beveiligde AI-dienst.')}</div><div class="actions">${button('Nieuw gesprek','botReset',true)}</div></div>
  <div class="notice">Timo maakt een eerste, vrijblijvende verkenning. De schets is conceptueel en niet op schaal. Prijzen worden alleen getoond wanneer gevalideerde prijsinformatie beschikbaar is; anders benoemt Timo welke posten nog moeten worden geprijsd.</div>`;
 }
