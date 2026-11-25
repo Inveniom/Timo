@@ -1,24 +1,77 @@
 <!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Thimo365 | Project Navigator</title><style>
 :root{--green:#274638;--lime:#d8e4b9;--paper:#f6f7f2;--line:#dce3d9;--ink:#233c30}*{box-sizing:border-box}body{margin:0;font-family:Manrope,Arial,sans-serif;color:var(--ink);background:var(--paper)}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:5px;padding:12px 18px;background:var(--green);color:white;font-weight:600}button.alt{background:white;color:var(--green);border:1px solid var(--line)}header{background:var(--green);color:white;padding:18px 4%;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.logo{font-size:32px;font-weight:800;letter-spacing:-2px}.logo span{color:var(--lime)}.logo small{display:block;font-size:10px;letter-spacing:2px;font-weight:400}.switch button{background:transparent;border:1px solid #93a499}.switch .active{background:var(--lime);color:var(--green)}.shell{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 100px)}nav{background:#e9eee5;padding:28px 16px}nav button{display:block;width:100%;text-align:left;background:transparent;color:var(--ink);margin:3px 0;font-weight:500}nav button.active{background:#d6e1cc;font-weight:700}main{max-width:1250px;width:100%;padding:40px 5%;margin:auto;align-self:start}h1{font-size:clamp(28px,4vw,48px);letter-spacing:-1.6px;line-height:1.08;margin:10px 0 20px}h2{font-size:21px;margin:0 0 16px}p{line-height:1.6;color:#53665a}small,.muted{color:#63756a;font-size:13px}.eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:bold;color:#66816c}.hero{background:#dfe8d0;border-radius:10px;padding:36px;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center;margin-bottom:24px}.hero svg{width:100%}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:20px 0}.card{background:white;border:1px solid var(--line);border-radius:9px;padding:24px;margin-bottom:16px}.grid .card{margin:0}.metric{font-size:34px;font-weight:700;margin:12px 0}.line{display:flex;justify-content:space-between;align-items:center;gap:15px;border-bottom:1px solid var(--line);padding:15px 0}.line:last-child{border:0}.tag{background:#e8eedc;border-radius:5px;padding:6px 10px;font-size:12px;text-align:right}.fields{display:grid;grid-template-columns:1fr 1fr;gap:18px}label{display:block;font-size:13px;font-weight:600;margin-bottom:7px}input,select,textarea{width:100%;border:1px solid #cbd7ca;border-radius:5px;padding:12px;background:white;color:var(--ink)}textarea{min-height:130px;resize:vertical}.notice{background:#f2eedf;padding:16px;border-radius:6px;margin:16px 0;color:#6e5e38;line-height:1.5}.bar{height:9px;background:#e6ebe4;border-radius:10px;margin:8px 0 18px;overflow:hidden}.bar i{display:block;height:100%;background:#64866b}.house{width:100%;background:#edf0e7;border-radius:5px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}footer{padding:20px 4%;border-top:1px solid var(--line);font-size:12px;color:#647568}table{border-collapse:collapse;width:100%;font-size:14px}td,th{text-align:left;padding:12px;border-bottom:1px solid var(--line)}th{background:#e9eee5} @media(max-width:760px){.shell{display:block}nav{display:flex;overflow:auto;padding:8px}nav button{width:auto;white-space:nowrap}.hero,.fields{grid-template-columns:1fr}main{padding:24px 5%}.card{padding:16px}.hero{padding:24px}table{font-size:12px}}
 .chatlog{display:flex;flex-direction:column;gap:16px;margin:20px 0;max-height:60vh;overflow:auto;padding:4px}.botbubble,.userbubble{padding:16px;border-radius:12px;max-width:90%;overflow-wrap:anywhere}.botbubble{background:#f1f4ee;border:1px solid var(--line);align-self:flex-start}.userbubble{background:#dce7d2;align-self:flex-end}.source{font-size:12px;border-left:3px solid #64866b;padding:8px;margin:8px 0;color:#53665a;background:white}.botinput{display:flex;gap:10px;align-items:flex-end}.botinput textarea{min-height:65px}.botinput button{flex-shrink:0}.aihero{background:#dfe8d0;border:2px solid #839e75;padding:28px}.aihero h2{font-size:clamp(23px,3vw,34px);margin:12px 0}.websearch{display:inline-block;background:#274638;color:white;padding:12px 16px;border-radius:6px;text-decoration:none;font-weight:600}nav button[data-act="go:AI-assistent"]{background:#274638;color:white;font-weight:700}nav button[data-act="go:AI-assistent"].active{background:#41664e;outline:2px solid #a9c49b}.aiquick{position:fixed;right:20px;bottom:20px;z-index:10;box-shadow:0 4px 20px #0003;border-radius:30px} 
-/* Thimo365-inspired visual refinement */
-:root{--green:#263f32;--lime:#d9e3bd;--paper:#f7f7f2;--line:#e2e6dc;--ink:#26392f;--sage:#e8ede3;--muted:#68776c;--accent:#9aab82}
-html{scroll-behavior:smooth}body{font-family:Manrope,"Aptos",Arial,sans-serif;letter-spacing:-.01em;background:var(--paper);color:var(--ink)}
-header{min-height:88px;padding:18px clamp(20px,5vw,76px);background:#263f32;box-shadow:0 3px 18px #1b30251a;position:relative;z-index:2}
-.logo{font-size:34px;letter-spacing:-2.4px;line-height:.95;color:#fff}.logo span{color:#d9e3bd}.logo small{margin-top:9px;font-size:9px;letter-spacing:2.15px;line-height:1.3;color:#d8e2d5;font-weight:600}
-.switch{display:flex;gap:8px}.switch button{border-color:#718679;color:#f5f7f1;border-radius:3px;padding:10px 15px;font-size:12px;letter-spacing:.02em}.switch .active{background:#d9e3bd;color:#263f32;border-color:#d9e3bd}
-.shell{grid-template-columns:232px minmax(0,1fr);max-width:1600px;margin:0 auto;min-height:calc(100vh - 150px);background:#f7f7f2}
-nav{background:#edf0e8;padding:34px 16px;border-right:1px solid #e0e6dc}nav button{padding:12px 14px;border-radius:3px;font-size:13px;color:#405348;transition:background .18s,color .18s}nav button:hover{background:#dfe7d8;color:#263f32}nav button.active{background:#dce5d2;color:#263f32;box-shadow:inset 3px 0 #718a65}
-main{max-width:1320px;padding:48px clamp(22px,4vw,64px) 72px}h1{font-size:clamp(32px,4vw,52px);line-height:1.04;letter-spacing:-2px;font-weight:700;color:#263f32;margin:12px 0 18px}h2{font-size:23px;letter-spacing:-.55px;color:#2b4034}h3{font-size:17px;letter-spacing:-.25px;color:#2b4034}p{color:#5e6d62;line-height:1.72}.eyebrow{font-size:10px;letter-spacing:2.1px;color:#72866d;font-weight:800}
-.card{border:1px solid #e2e7dd;border-radius:4px;box-shadow:0 8px 26px #233c3010;padding:26px;background:#fff}.grid .card{box-shadow:0 5px 18px #233c300b}.hero{background:#e7ecdf;border-radius:4px;padding:clamp(28px,4vw,54px);grid-template-columns:1.05fr .95fr;box-shadow:inset 0 0 0 1px #d9e2d3}.hero h1{max-width:620px}.hero svg{filter:drop-shadow(0 14px 12px #344b3220)}
-button{background:#2b4938;border-radius:3px;padding:12px 18px;letter-spacing:.01em;transition:background .18s,transform .18s,box-shadow .18s}button:hover{background:#3b6048;box-shadow:0 5px 14px #233c3020;transform:translateY(-1px)}button.alt{background:#fff;color:#2b4938;border-color:#cad5c8}button.alt:hover{background:#eef2e9}
-input,select,textarea{border-radius:3px;border-color:#cfd8cc;padding:13px 14px;background:#fff}input:focus,select:focus,textarea:focus{outline:2px solid #a8b99b;outline-offset:1px;border-color:#82987a}
-.metric{font-size:36px;letter-spacing:-1.4px;color:#2b4938}.tag{background:#edf1e7;color:#49604d;border-radius:3px}.notice{background:#f1efe4;border-left:3px solid #a8a078;border-radius:2px;color:#6d654c}
-.chatlog{max-height:65vh;gap:18px}.botbubble,.userbubble{border-radius:4px;padding:18px 20px;line-height:1.65}.botbubble{background:#f2f4ee;border-color:#e0e6dc}.userbubble{background:#e2ead9;color:#34483a}.botinput{align-items:stretch}.botinput textarea{min-height:58px}.aihero{background:#e7ecdf;border:1px solid #d3ddca;border-radius:4px}.aihero h2{font-size:clamp(25px,3vw,38px)}
-footer{background:#263f32;color:#dbe4d8;border:0;padding:24px clamp(20px,5vw,76px)}footer button.alt{background:transparent;color:#e8eee4;border-color:#7c9181}
-.aiquick{background:#d9e3bd;color:#263f32;border:1px solid #c5d2aa;border-radius:3px;box-shadow:0 8px 24px #1d342333}.aiquick:hover{background:#e5edcf;color:#263f32}
-.websearch{background:#2b4938;border-radius:3px}
-@media(max-width:760px){header{padding:16px 18px}.logo{font-size:29px}.switch{width:100%}.switch button{flex:1;padding:9px 8px}.shell{display:block}nav{border-right:0;border-bottom:1px solid #dfe6dc;padding:8px}nav button{padding:10px 12px}.hero{grid-template-columns:1fr}.hero svg{max-height:230px}main{padding:28px 18px 50px}.card{padding:19px}h1{letter-spacing:-1.4px}.botinput{flex-direction:column}.botinput button{width:100%}}
+/* Thimo365-inspired visual refinement — stronger, clearly visible brand layer */
+:root{--green:#203b2e;--lime:#dce7bf;--paper:#f2f3ed;--line:#dce3d8;--ink:#26392f;--sage:#e7ecdf;--muted:#68776c;--accent:#9aab82}
+html{scroll-behavior:smooth}
+body{font-family:Manrope,"Aptos",Arial,sans-serif;letter-spacing:-.012em;background:#f2f3ed;color:#26392f}
+header{min-height:104px;padding:22px clamp(20px,5vw,76px);background:#203b2e;border-bottom:5px solid #dce7bf;box-shadow:0 5px 22px #17291f20;position:relative;z-index:2}
+.logo{font-size:38px;letter-spacing:-2.6px;line-height:1;color:#fff}
+.logo:before{content:"";display:inline-block;width:9px;height:32px;margin-right:12px;background:#dce7bf;vertical-align:-4px;border-radius:2px}
+.logo span{color:#dce7bf}
+.logo small{margin-top:10px;font-size:10px;letter-spacing:2px;line-height:1.4;color:#e1e8dc;font-weight:700}
+.switch{display:flex;gap:9px}
+.switch button{border:1px solid #819486;color:#f5f7f1;background:transparent;border-radius:4px;padding:11px 16px;font-size:12px;letter-spacing:.02em}
+.switch .active{background:#dce7bf;color:#203b2e;border-color:#dce7bf}
+.shell{grid-template-columns:248px minmax(0,1fr);max-width:1600px;margin:0 auto;min-height:calc(100vh - 160px);background:#f2f3ed}
+nav{background:#fff;padding:38px 17px;border-right:1px solid #e0e5dc}
+nav button{padding:13px 15px;border-radius:4px;font-size:13px;color:#405348;transition:background .18s,color .18s}
+nav button:hover{background:#edf1e8;color:#203b2e}
+nav button.active{background:#e5ebdc;color:#203b2e;box-shadow:inset 4px 0 #78916e;font-weight:700}
+main{max-width:1320px;padding:52px clamp(22px,4vw,68px) 76px}
+h1{font-size:clamp(34px,4vw,54px);line-height:1.03;letter-spacing:-2.2px;font-weight:750;color:#203b2e;margin:12px 0 20px}
+h2{font-size:24px;letter-spacing:-.65px;color:#263f32}
+h3{font-size:18px;letter-spacing:-.3px;color:#263f32}
+p{color:#5e6d62;line-height:1.75}
+.eyebrow{font-size:10px;letter-spacing:2.2px;color:#72866d;font-weight:800}
+.card{border:1px solid #dfe5da;border-radius:9px;box-shadow:0 8px 28px #233c3010;padding:28px;background:#fff}
+.grid .card{box-shadow:0 5px 18px #233c300b}
+.hero{background:#203b2e;border-radius:10px;padding:clamp(30px,4.5vw,58px);grid-template-columns:1.05fr .95fr;box-shadow:0 14px 34px #203b2e20}
+.hero h1,.hero h2{color:#fff}
+.hero p{color:#e0e8df}
+.hero .eyebrow{color:#dce7bf}
+.hero svg{filter:drop-shadow(0 14px 12px #0b1c1228)}
+button{background:#294b38;border-radius:4px;padding:13px 19px;letter-spacing:.01em;transition:background .18s,transform .18s,box-shadow .18s}
+button:hover{background:#3b6048;box-shadow:0 5px 14px #233c3020;transform:translateY(-1px)}
+button.alt{background:#fff;color:#294b38;border-color:#cad5c8}
+button.alt:hover{background:#eef2e9}
+input,select,textarea{border-radius:5px;border-color:#cfd8cc;padding:14px 15px;background:#fff}
+input:focus,select:focus,textarea:focus{outline:2px solid #a8b99b;outline-offset:1px;border-color:#82987a}
+.metric{font-size:38px;letter-spacing:-1.5px;color:#294b38}
+.tag{background:#edf1e7;color:#49604d;border-radius:4px}
+.notice{background:#f1efe4;border-left:4px solid #a8a078;border-radius:4px;color:#6d654c;padding:15px 18px}
+.chatlog{max-height:65vh;gap:18px}
+.botbubble,.userbubble{border-radius:8px;padding:19px 21px;line-height:1.7}
+.botbubble{background:#fff;border:1px solid #e0e6dc}
+.userbubble{background:#e2ead9;color:#34483a}
+.botinput{align-items:stretch}
+.botinput textarea{min-height:62px}
+.aihero{background:#203b2e;border:1px solid #203b2e;border-radius:10px;padding:clamp(28px,4vw,48px)}
+.aihero h2{font-size:clamp(27px,3vw,40px);color:#fff}
+.aihero p,.aihero label{color:#e0e8df}
+.aihero input{background:#fff;color:#26392f}
+footer{background:#203b2e;color:#dbe4d8;border-top:5px solid #dce7bf;padding:25px clamp(20px,5vw,76px)}
+footer button.alt{background:transparent;color:#e8eee4;border-color:#7c9181}
+.aiquick{background:#dce7bf;color:#203b2e;border:1px solid #c5d2aa;border-radius:5px;box-shadow:0 8px 24px #1d342333}
+.aiquick:hover{background:#e8efcf;color:#203b2e}
+.websearch{background:#294b38;border-radius:4px}
+@media(max-width:760px){
+header{padding:17px 18px;min-height:0}
+.logo{font-size:31px}
+.logo:before{height:27px;margin-right:9px}
+.switch{width:100%}
+.switch button{flex:1;padding:10px 8px}
+.shell{display:block}
+nav{border-right:0;border-bottom:1px solid #dfe5dc;padding:9px;background:#fff}
+nav button{padding:10px 12px}
+.hero{grid-template-columns:1fr;padding:27px}
+.hero svg{max-height:230px}
+main{padding:28px 18px 50px}
+.card{padding:20px}
+h1{letter-spacing:-1.5px}
+.botinput{flex-direction:column}
+.botinput button{width:100%}
+}
 </style></head><body><header><div class="logo">thimo<span>365</span><small>MEEDENKEN ALS BASIS · BOUWEN IN HOUT ALS RESULTAAT</small></div><div class="switch"><button id="client">Klantomgeving</button> <button id="staff">Medewerkersomgeving</button></div></header><div class="shell"><nav id="nav"></nav><main id="main"></main></div><footer>THIMO365 · Timo ontwerp- en projectomgeving · <button class="alt" id="reset">Demo herstellen</button></footer><script>
 const initial={name:'De Groene Hof',org:'Woningcorporatie',loc:'',count:24,target:'Sociale huur',budget:'',status:'Locatie in onderzoek',type:'Comfort 55',saved:false,decision:false,questions:[],analysis:[],notes:[]};let p;try{p=JSON.parse(localStorage.getItem('thimo-demo-v1'))||structuredClone(initial)}catch{p=structuredClone(initial)}let role='client',page='AI-assistent',search='',draft='';const menus={client:['Overzicht','Projectintake','Woningconfiguratie','Productkennisbank','Haalbaarheid','Mijn project'],staff:['Dashboard','Klantprojecten','AI-vraagfilter','Productbibliotheek','Projectbesluiten','Commerciële kansen']};const kb=[['Woningtypen en afmetingen','Woonoppervlak en woningconfiguraties','Afmetingen en woningtypen'],['Constructie en materialen','Materiaalkeuze en constructie','Constructie en hout'],['Energie en duurzaamheid','Energieprestaties en circulariteit','Energie en duurzaamheid'],['Onderhoud en garanties','Onderhoud en garanties','Onderhoud'],['Planning en realisatie','Indicatieve procesfasen','Doorlooptijd en planning'],['Certificaten en prestaties','Beschikbare prestatieverklaringen','Certificaten']];const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const save=()=>{try{localStorage.setItem('thimo-demo-v1',JSON.stringify(p))}catch{}};const button=(t,a,alt=false)=>`<button ${alt?'class="alt"':''} data-act="${a}">${t}</button>`;const go=(t)=>button(t,'go:'+t);const title=(a,b,c='')=>`<div class="eyebrow">${a}</div><h1>${b}</h1>${c?`<p>${c}</p>`:''}`;const line=(a,b)=>`<div class="line"><span>${a}</span><span class="tag">${b}</span></div>`;const metric=(a,b)=>`<div class="card"><div class="muted">${b}</div><div class="metric">${a}</div></div>`;const field=(label,k,typ='text')=>`<div><label for="${k}">${label}</label><input id="${k}" data-key="${k}" type="${typ}" ${typ==='number'?'min="1"':''} value="${esc(p[k])}"></div>`;const sel=(label,k,opts)=>`<div><label>${label}</label><select data-key="${k}">${opts.map(o=>`<option ${o===p[k]?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`;const house=(i=1)=>`<svg class="house" viewBox="0 0 400 210" role="img" aria-label="Illustratieve modulaire woning"><rect width="400" height="210" fill="#e5ebdd"/><path d="M0 175H400" stroke="#a4b79c"/><ellipse cx="200" cy="182" rx="165" ry="12" fill="#ccd6c4"/><path d="M60 75L240 42L340 77L160 110Z" fill="#44584c"/><path d="M60 75L160 110V175L60 144Z" fill="#b4a38b"/><path d="M160 110L340 77V143L160 175Z" fill="#c4b69b"/><g fill="#47645c"><path d="M76 95L105 104V135L76 126Z"/><path d="M118 110L144 118V150L118 142Z"/><path d="M180 120L218 113V146L180 153Z"/><path d="M232 110L270 103V136L232 143Z"/><path d="M284 100L323 93V126L284 133Z"/></g><g stroke="#e3dac6" opacity=".8">${Array.from({length:12},(_,j)=>`<path d="M${166+j*14} ${109-j*2.5}v65"/>`).join('')}</g><circle cx="35" cy="134" r="22" fill="#8da77c"/><circle cx="365" cy="133" r="26" fill="#91a981"/></svg>`;
 const home=()=>`<div class="hero"><div><div class="eyebrow">Samen wonen realiseren</div><h1>Van woonvraag naar woonoplossing.</h1><p>Een gedeeld projectdossier, van de eerste verkenning tot gezamenlijke besluiten.</p>${go('Projectintake')}</div>${house()}</div><h2>Uw project</h2><div class="grid">${metric(esc(p.count),'Gewenste woningen')}${metric(p.saved?'Ingediend':'Concept','Projectintake')}${metric(p.decision?'Afgerond':'Open','Besluit locatieonderzoek')}</div><div class="card"><h2>${esc(p.name)}</h2>${line('Woningconcept',esc(p.type))}${line('Locatie',esc(p.loc||'Nog onbekend'))}${go('Mijn project')}</div>`;
