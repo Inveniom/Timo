@@ -704,4 +704,101 @@ views.Projectbeheer=staffProjectHub;
 views.Dashboard=compactStaffDashboard;
 render();
 
+/* Interactieve klant-editor voor het verschuiven en draaien van units */
+function conceptLayoutKey(){return 'thimo-concept-layout-'+selectedClientId}
+function conceptLayout(f){
+ try{
+  const saved=JSON.parse(localStorage.getItem(conceptLayoutKey()));
+  if(saved&&Array.isArray(saved.units))return saved;
+ }catch{}
+ const o=f.orientation||{cols:1,rows:1,a:f.unitLength,b:f.unitWidth,rot:false};
+ const cols=Math.max(1,o.cols||1),rows=Math.max(1,o.rows||1),units=[];
+ for(let i=0;i<f.required;i++){
+  const col=i%cols,row=Math.floor(i/cols);
+  units.push({id:'unit-'+(i+1),x:f.setback+col*(o.a+f.gap),y:f.setback+row*(o.b+f.gap),rotation:o.rot?90:0});
+ }
+ return {units,selected:'unit-1'};
+}
+function saveConceptLayout(layout){try{localStorage.setItem(conceptLayoutKey(),JSON.stringify(layout))}catch{}}
+function conceptPlanSvg(f){
+ const L=Number(f.plotL),W=Number(f.plotW),scale=Math.min(760/(L+12),460/(W+12)),pad=42,sw=L*scale,sh=W*scale,ox=pad,oy=pad;
+ const layout=conceptLayout(f),uL=f.unitLength,uW=f.unitWidth;
+ let units='';
+ for(const unit of layout.units){
+  const rot=((Number(unit.rotation)||0)%180+180)%180===90,ww=(rot?uW:uL)*scale,hh=(rot?uL:uW)*scale;
+  const x=ox+Number(unit.x||0)*scale,y=oy+Number(unit.y||0)*scale,cx=x+ww/2,cy=y+hh/2,selected=layout.selected===unit.id;
+  const inside=Number(unit.x)>=f.setback-0.001&&Number(unit.y)>=f.setback-0.001&&Number(unit.x)+(rot?uW:uL)<=L-f.setback+0.001&&Number(unit.y)+(rot?uL:uW)<=W-f.setback+0.001;
+  units+='<g class="editable-unit '+(selected?'is-selected ':'')+(inside?'':'is-outside')+'" data-unit-id="'+unit.id+'" tabindex="0" role="button" aria-label="Unit '+unit.id.replace('unit-','')+', versleep of selecteer"><rect class="unit-shape" x="'+x+'" y="'+y+'" width="'+ww+'" height="'+hh+'" rx="5" fill="'+(inside?'#d9eee7':'#ffe1d9')+'" stroke="'+(selected?'#e58b35':inside?'#25877d':'#c94f45')+'" stroke-width="'+(selected?4:2)+'"/><path d="M'+(x+ww*.5)+' '+y+'V'+(y+hh)+'" stroke="#82aaa0" stroke-width="1.5"/><text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="'+Math.max(9,Math.min(15,scale*2))+'" font-weight="700" fill="#174c50">'+unit.id.replace('unit-','')+'</text><circle cx="'+(x+ww-7)+'" cy="'+(y+7)+'" r="4" fill="'+(selected?'#e58b35':'#25877d')+'"/></g>';
+ }
+ const viewW=sw+pad*2,viewH=sh+pad*2+32;
+ return '<svg class="concept-plan editable-site-plan" viewBox="0 0 '+viewW+' '+viewH+'" role="group" aria-label="Bewerkbare terreinplattegrond. Sleep units om ze te verplaatsen.">'+
+ '<rect width="100%" height="100%" fill="#f6f8f3"/><rect x="'+ox+'" y="'+oy+'" width="'+sw+'" height="'+sh+'" fill="#e9eee3" stroke="#536b57" stroke-width="3"/>'+
+ '<rect x="'+(ox+f.setback*scale)+'" y="'+(oy+f.setback*scale)+'" width="'+Math.max(0,sw-2*f.setback*scale)+'" height="'+Math.max(0,sh-2*f.setback*scale)+'" fill="none" stroke="#b38d61" stroke-dasharray="6 4" stroke-width="1.5"/>'+
+ '<g class="editable-units">'+units+'</g><text x="'+ox+'" y="'+(viewH-10)+'" font-size="12" fill="#536b57">Terrein '+L+' × '+W+' m · versleep units om de opstelling te wijzigen</text></svg>';
+}
+function conceptEditorControls(f){
+ const layout=conceptLayout(f),selected=layout.units.find(x=>x.id===layout.selected),num=selected?selected.id.replace('unit-',''):'—';
+ return '<div class="unit-editor-toolbar"><div><strong>Unit '+num+' geselecteerd</strong><small>Sleep de unit in de plattegrond. Gebruik de knoppen om 90° te draaien.</small></div><div class="actions"><button type="button" data-layout-action="rotate-left" '+(selected?'':'disabled')+'>↶ 90°</button><button type="button" data-layout-action="rotate-right" '+(selected?'':'disabled')+'>↷ 90°</button><button type="button" class="alt" data-layout-action="reset">Opstelling herstellen</button></div></div>';
+}
+const conceptViewBeforeEdit=conceptView;
+conceptView=function(){
+ let html=conceptViewBeforeEdit();
+ const f=conceptFit(conceptData());
+ if(!f.ready)return html;
+ html=html.replace('<div class="card"><div class="eyebrow">Conceptuele plattegrond</div><h2>Ruimtelijke opstelling op het terrein</h2>'+((html.match(/<div class="concept-metrics">[\s\S]*?<\/div>/)||[])[0]||'')+conceptPlanSvg(f),
+ '<div class="card concept-editor-card"><div class="eyebrow">Interactieve terreinplanner</div><h2>Plaats en draai uw units zelf</h2><p>Selecteer een unit en sleep deze naar de gewenste plek. De positie en draairichting worden automatisch bewaard op dit apparaat.</p>'+conceptEditorControls(f)+conceptPlanSvg(f));
+ return html;
+};
+const conceptEditorStyle=document.createElement('style');
+conceptEditorStyle.textContent=`
+.concept-editor-card{overflow:hidden}
+.unit-editor-toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 16px;margin:14px 0;background:#eff7f5;border:1px solid #d5e9e4;border-radius:10px}
+.unit-editor-toolbar strong,.unit-editor-toolbar small{display:block}.unit-editor-toolbar small{font-size:12px;color:#61766f;margin-top:4px}
+.unit-editor-toolbar .actions{margin:0}.unit-editor-toolbar button{padding:10px 13px}
+.editable-site-plan{display:block;width:100%;max-height:680px;touch-action:none;user-select:none;background:#f6f8f3;border:1px solid #dce8e2;border-radius:12px;cursor:crosshair}
+.editable-unit{cursor:grab;outline:none}.editable-unit:active{cursor:grabbing}.editable-unit.is-selected .unit-shape{filter:drop-shadow(0 3px 4px #173f4640)}.editable-unit.is-outside .unit-shape{stroke-dasharray:5 3}
+@media(max-width:700px){.unit-editor-toolbar{align-items:flex-start}.unit-editor-toolbar .actions{width:100%}.unit-editor-toolbar button{flex:1}}
+`;
+document.head.appendChild(conceptEditorStyle);
+let activeUnitDrag=null;
+document.addEventListener('pointerdown',e=>{
+ const group=e.target.closest?.('.editable-unit'),svg=e.target.closest?.('.editable-site-plan');
+ if(!group||!svg)return;
+ const f=conceptFit(conceptData());if(!f.ready)return;
+ const layout=conceptLayout(f),id=group.dataset.unitId;
+ layout.selected=id;saveConceptLayout(layout);
+ const rect=svg.getBoundingClientRect(),vb=svg.viewBox.baseVal,scale=Math.min(760/(f.plotL+12),460/(f.plotW+12));
+ const point={x:(e.clientX-rect.left)*vb.width/rect.width,y:(e.clientY-rect.top)*vb.height/rect.height};
+ const unit=layout.units.find(x=>x.id===id);
+ activeUnitDrag={id,offsetX:point.x-42-unit.x*scale,offsetY:point.y-42-unit.y*scale,svg};
+ svg.setPointerCapture?.(e.pointerId);e.preventDefault();
+});
+document.addEventListener('pointermove',e=>{
+ if(!activeUnitDrag)return;
+ const f=conceptFit(conceptData());if(!f.ready)return;
+ const svg=activeUnitDrag.svg,rect=svg.getBoundingClientRect(),vb=svg.viewBox.baseVal,scale=Math.min(760/(f.plotL+12),460/(f.plotW+12));
+ const x=(e.clientX-rect.left)*vb.width/rect.width,y=(e.clientY-rect.top)*vb.height/rect.height;
+ const layout=conceptLayout(f),unit=layout.units.find(z=>z.id===activeUnitDrag.id);if(!unit)return;
+ unit.x=Math.round(Math.max(0,(x-42-activeUnitDrag.offsetX)/scale)*10)/10;
+ unit.y=Math.round(Math.max(0,(y-42-activeUnitDrag.offsetY)/scale)*10)/10;
+ saveConceptLayout(layout);
+ const rot=((Number(unit.rotation)||0)%180+180)%180===90,ww=(rot?f.unitWidth:f.unitLength)*scale,hh=(rot?f.unitLength:f.unitWidth)*scale;
+ const group=svg.querySelector('[data-unit-id="'+unit.id+'"]'),r=group?.querySelector('rect'),txt=group?.querySelector('text'),circle=group?.querySelector('circle');
+ if(group){const px=42+unit.x*scale,py=42+unit.y*scale;r.setAttribute('x',px);r.setAttribute('y',py);r.setAttribute('width',ww);r.setAttribute('height',hh);txt.setAttribute('x',px+ww/2);txt.setAttribute('y',py+hh/2+5);circle.setAttribute('cx',px+ww-7);circle.setAttribute('cy',py+7);group.setAttribute('transform','');}
+});
+document.addEventListener('pointerup',()=>{if(activeUnitDrag){activeUnitDrag=null;render()}});
+document.addEventListener('pointercancel',()=>{if(activeUnitDrag){activeUnitDrag=null;render()}});
+document.addEventListener('click',e=>{
+ const group=e.target.closest?.('.editable-unit');
+ if(group){const f=conceptFit(conceptData());if(!f.ready)return;const layout=conceptLayout(f);layout.selected=group.dataset.unitId;saveConceptLayout(layout);render();return}
+ const action=e.target.closest?.('[data-layout-action]')?.dataset.layoutAction;
+ if(!action)return;
+ const f=conceptFit(conceptData());if(!f.ready)return;
+ const layout=conceptLayout(f),unit=layout.units.find(x=>x.id===layout.selected);
+ if(action==='reset'){localStorage.removeItem(conceptLayoutKey())}
+ else if(unit&&action==='rotate-left')unit.rotation=((Number(unit.rotation)||0)+270)%360;
+ else if(unit&&action==='rotate-right')unit.rotation=((Number(unit.rotation)||0)+90)%360;
+ saveConceptLayout(layout);render();
+});
+
 </script></body></html>
