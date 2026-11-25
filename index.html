@@ -423,7 +423,7 @@ function chatView(){
  const questionsPanel=openQuestions.length
   ? '<div class="notice open-questions"><strong>Openstaande vragen voor uw ontwerp</strong><p>Beantwoord deze vragen hieronder, zodat Thimo het voorstel verder kan aanscherpen.</p><ul>'+openQuestions.map(q=>'<li>'+esc(q)+'</li>').join('')+'</ul></div>'
   : '';
- return title('Klantomgeving','Welkom bij '+esc(client.name),'Uw persoonlijke projectomgeving met eigen ontwerpkeuzes, gesprekshistorie en projectinformatie.')
+ return customerSelector()+title('Klantomgeving','Welkom bij '+esc(client.name),'Uw persoonlijke projectomgeving met eigen ontwerpkeuzes, gesprekshistorie en projectinformatie.')
  +'<section class="card customer-unit-first"><div class="eyebrow">Stap 1 · Productkeuze</div><h2>KIES UW STANDAARDUNIT</h2>'+unitConfigurator()+'</section>'
  +'<section class="card customer-chat-panel"><div class="eyebrow">Stap 2 · Uw digitale ontwerpadviseur</div><h2>UW DIGITALE ONTWERPADVISEUR</h2><p>Hallo '+esc(client.name)+'. Thimo werkt met de informatie en voorkeuren die bij dit project horen. Stel uw vraag of beschrijf hieronder uw wensen.</p>'
  +'<div class="chatlog customer-chatlog" aria-live="polite"><div class="botbubble"><strong>Thimo</strong><p>Welkom bij Thimo. Waar kan ik u mee helpen met '+esc(client.name)+'? Vertel wat u wilt realiseren of aanpassen.</p></div>'+turns.map((t,i)=>'<div class="userbubble">'+esc(t.question)+'</div><div class="botbubble"><strong>Thimo</strong>'+(t.answer?'<p style="white-space:pre-wrap">'+esc(t.answer)+'</p>':'<p class="muted">Thimo denkt na…</p>')+'<div class="actions">'+(t.sent?'<span class="tag">Voorgelegd aan medewerker</span>':button('Voorleggen aan medewerker','botEsc:'+i,true))+'</div></div>').join('')+'</div>'
@@ -802,6 +802,19 @@ document.addEventListener('click',e=>{
 });
 
 render();
+
+
+/* Klantkeuze voor de demo-omgeving */
+document.addEventListener('change',e=>{
+ if(e.target?.id!=='customerSelect')return;
+ const id=e.target.value;
+ if(!demoClients[id])return;
+ if(typeof saveClientUnitSettings==='function')saveClientUnitSettings();
+ selectedClientId=id;
+ localStorage.setItem('timo-selected-client',id);
+ if(typeof loadClientUnitSettings==='function')loadClientUnitSettings();
+ render();
+});
 
 /* 3D-massa-impressie volgt de actuele positie en 90-gradenrotatie van iedere unit */
 function conceptSiteMassImpression(f){
