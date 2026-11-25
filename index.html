@@ -212,7 +212,7 @@ function renderCustomerProposal(turns){
  if(!latest)return '';
  const d=latest.proposal||{}, u=standardUnits[selectedStandardUnit]||standardUnits.Thimo365;
  const count=selectedUnitCount, totalArea=u.area*count;
- const floorCount=Math.max(1,Math.min(4,Number.parseInt(String(unitConfiguration.floors||'1').match(/\\d+/)?.[0]||'1',10)));
+ const floorCount=Math.max(1,Math.min(4,Number.parseInt(String(unitConfiguration.floors||'1').match(/[0-9]+/)?.[0]||'1',10)));
  const lengthByUnit={Thimo265:8.0,Thimo365:10.4,Thimo465:12.9};
  const unitLength=lengthByUnit[selectedStandardUnit]||10.4, unitWidth=5.4;
  const list=a=>(a||[]).map(x=>'<li>'+esc(x)+'</li>').join('');
@@ -369,7 +369,7 @@ function renderCustomerProposal(turns){
  if(!latest)return '';
  const d=latest.proposal||{}, u=standardUnits[selectedStandardUnit]||standardUnits.Thimo365;
  const count=selectedUnitCount, totalArea=u.area*count;
- const floorCount=Math.max(1,Math.min(4,Number.parseInt(String(unitConfiguration.floors||'1').match(/\\d+/)?.[0]||'1',10)));
+ const floorCount=Math.max(1,Math.min(4,Number.parseInt(String(unitConfiguration.floors||'1').match(/[0-9]+/)?.[0]||'1',10)));
  const lengthByUnit={Thimo265:8.0,Thimo365:10.4,Thimo465:12.9};
  const unitLength=lengthByUnit[selectedStandardUnit]||10.4, unitWidth=5.4;
  const list=a=>(a||[]).map(x=>'<li>'+esc(x)+'</li>').join('');
