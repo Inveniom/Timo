@@ -1017,5 +1017,87 @@ document.addEventListener('change',e=>{
  render();
 },true);
 
+
+/* Stap 1 is leidend: het totale woningenaantal wordt nooit door de verdeling per bouwlaag gewijzigd. */
+function thimoStepOneTotal(){
+ const n=Math.floor(Number(p?.count));
+ return Number.isFinite(n)&&n>0?Math.min(100,n):Math.max(1,Number(selectedUnitCount)||1);
+}
+function thimoSyncStepOneTotal(){
+ const total=thimoStepOneTotal();
+ selectedUnitCount=total;
+ localStorage.setItem('timo-unit-count',String(total));
+ let counts=Array.isArray(unitConfiguration.floorUnitCounts)?unitConfiguration.floorUnitCounts.slice(0,thimoFloorCount()).map(v=>Math.max(0,Math.floor(Number(v)||0))):[];
+ const floors=thimoFloorCount();
+ if(counts.length!==floors||counts.reduce((a,b)=>a+b,0)!==total){
+  counts=Array.from({length:floors},(_,i)=>Math.floor(total/floors)+(i<total%floors?1:0));
+ }
+ unitConfiguration.floorUnitCounts=counts;
+ if(typeof saveClientUnitSettings==='function')saveClientUnitSettings();
+ return {total,counts};
+}
+const thimoPriorFloorCounts=thimoFloorCounts;
+thimoFloorCounts=function(){
+ const state=thimoSyncStepOneTotal();
+ return state.counts;
+};
+const thimoPriorConceptFit=conceptFit;
+conceptFit=function(c){
+ const state=thimoSyncStepOneTotal();
+ const f=thimoPriorConceptFit(c);
+ if(!f.ready)return f;
+ const active=Math.max(0,Math.min(state.counts.length-1,thimoActiveFloor));
+ const required=state.counts[active]||0;
+ return {...f,required,totalRequired:state.total,floorCounts:state.counts,activeFloor:active,fit:f.capacity>=required,shortage:Math.max(0,required-f.capacity)};
+};
+/* Per verdieping een eigen plattegrond met het exacte aantal woningen en een schematische interne indeling. */
+function thimoFloorDrawingSvg(floorIndex,count){
+ const u=standardUnits[selectedStandardUnit]||standardUnits.Thimo365;
+ const cols=Math.max(1,Math.min(4,Math.ceil(Math.sqrt(Math.max(1,count)))));
+ const rows=Math.max(1,Math.ceil(count/cols)),cellW=250,cellH=150,gap=18,pad=24;
+ const width=pad*2+cols*cellW+(cols-1)*gap,height=pad*2+rows*cellH+(rows-1)*gap+34;
+ let units='';
+ for(let i=0;i<count;i++){
+  const x=pad+(i%cols)*(cellW+gap),y=pad+Math.floor(i/cols)*(cellH+gap);
+  const w=cellW-12,h=cellH-26,ix=x+9,iy=y+8,iw=w-18,ih=h-22;
+  const split=ix+iw*.57,wetY=iy+ih*.52;
+  units+='<g><rect x="'+ix+'" y="'+iy+'" width="'+iw+'" height="'+ih+'" rx="3" fill="#fff" stroke="#315c55" stroke-width="2.2"/><rect x="'+(ix+8)+'" y="'+(iy+8)+'" width="'+(iw*.43)+'" height="'+(ih-16)+'" fill="#eef3e9" stroke="#9cad94"/><path d="M'+split+' '+iy+'V'+(iy+ih)+' M'+split+' '+wetY+'H'+(ix+iw)+'" stroke="#668579" stroke-width="2"/><rect x="'+(split+7)+'" y="'+(iy+7)+'" width="'+(iw*.25)+'" height="'+(ih*.35)+'" fill="#e5eee9" stroke="#9cad94"/><rect x="'+(split+7)+'" y="'+(wetY+7)+'" width="'+(iw*.25)+'" height="'+(ih*.30)+'" fill="#f0e9dd" stroke="#b8a88f"/><text x="'+(ix+iw*.25)+'" y="'+(iy+ih*.52)+'" text-anchor="middle" font-size="12" fill="#315c55">Woonruimte</text><text x="'+(split+iw*.17)+'" y="'+(iy+ih*.25)+'" text-anchor="middle" font-size="9" fill="#315c55">Slaapkamer</text><text x="'+(split+iw*.17)+'" y="'+(wetY+ih*.22)+'" text-anchor="middle" font-size="9" fill="#725d43">Keuken / natte cel</text><text x="'+(x+cellW/2)+'" y="'+(y+cellH-3)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#294b38">UNIT '+(i+1)+'</text></g>';
+ }
+ return '<svg class="thimo-floor-drawing" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Schematische plattegrond bouwlaag '+(floorIndex+1)+' met '+count+' units"><rect width="'+width+'" height="'+height+'" rx="9" fill="#f6f8f3"/><text x="'+pad+'" y="'+(height-12)+'" font-size="12" font-weight="700" fill="#315c55">BOUWLAAG '+(floorIndex+1)+' · '+count+' '+(count===1?'UNIT':'UNITS')+' · '+esc(selectedStandardUnit)+' · '+String(u.area).replace('.',',')+' m² per unit indicatief</text>'+units+'</svg>';
+}
+const thimoPriorConceptView=conceptView;
+conceptView=function(){
+ const html=thimoPriorConceptView();
+ const state=thimoSyncStepOneTotal(),counts=state.counts;
+ const drawings='<section class="card thimo-all-floor-designs"><div class="eyebrow">Verdiepingsontwerpen</div><h2>Ontwerp per bouwlaag</h2><p>Iedere verdieping krijgt een eigen plattegrond. De tekeningen tonen exact de verdeling uit stap 1 en zijn schematische ontwerpvoorstellen; maatvoering, ontsluiting, constructie en brandveiligheid moeten nog worden uitgewerkt.</p>'+counts.map((n,i)=>'<article class="thimo-floor-design"><h3>Bouwlaag '+(i+1)+' · '+n+' '+(n===1?'unit':'units')+'</h3>'+(n?thimoFloorDrawingSvg(i,n):'<p class="muted">Op deze bouwlaag zijn volgens de huidige verdeling geen units voorzien.</p>')+'</article>').join('')+'</section>';
+ return html+drawings;
+};
+document.addEventListener('change',e=>{
+ const el=e.target;
+ if(el?.dataset?.thimoFloorCount===undefined)return;
+ e.preventDefault();e.stopImmediatePropagation();
+ const state=thimoSyncStepOneTotal(),counts=state.counts,index=Number(el.dataset.thimoFloorCount);
+ if(index<0||index>=counts.length)return;
+ const requested=Math.max(0,Math.min(state.total,Math.floor(Number(el.value)||0)));
+ const otherTotal=counts.reduce((a,b,i)=>a+(i===index?0:b),0);
+ if(requested+otherTotal>state.total){
+  counts[index]=Math.max(0,state.total-otherTotal);
+ }else{
+  counts[index]=requested;
+  let remainder=state.total-counts.reduce((a,b)=>a+b,0);
+  const receiver=counts.findIndex((v,i)=>i!==index);
+  if(receiver>=0)counts[receiver]+=remainder;
+  else counts[index]+=remainder;
+ }
+ unitConfiguration.floorUnitCounts=counts;
+ saveClientUnitSettings();
+ render();
+},true);
+document.addEventListener('change',e=>{
+ const el=e.target;
+ if(el?.dataset?.key!=='count')return;
+ thimoSyncStepOneTotal();
+},true);
+
 render();
 </script></body></html>
