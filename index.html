@@ -1166,5 +1166,16 @@ const thimoFinanceStyle=document.createElement('style');
 thimoFinanceStyle.textContent='.finance-edit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:18px 0}.finance-edit-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;background:#f5f8f8;border:1px solid #e1e9eb;border-radius:9px}.finance-edit-row>span:first-child{font-weight:600}.finance-edit-input{display:flex;align-items:center;gap:5px;min-width:125px}.finance-edit-input input{width:115px;text-align:right}.finance-percent-fields{max-width:540px;margin:16px 0}.staff-question-card{border-left:4px solid #1ba59b}.staff-question-meta{display:flex;gap:12px;align-items:center;margin:10px 0}.staff-question-text{padding:14px;background:#f3f7f7;border-radius:9px;white-space:pre-wrap}.staff-question-form textarea{width:100%}';
 document.head.appendChild(thimoFinanceStyle);
 
+/* Maak de bestaande financiële editor en klantvragen daadwerkelijk bereikbaar via de medewerkersnavigatie. */
+if(!menus.staff.includes('Financiën')) menus.staff.push('Financiën');
+if(!menus.staff.includes('Vragen aan medewerker')) menus.staff.push('Vragen aan medewerker');
+views['Financiën']=financeView;
+views['Vragen aan medewerker']=staffQuestionsView;
+
+/* Zorg dat antwoorden en financiële invoer alleen via de medewerkersomgeving worden beheerd. */
+const thimoStaffNavStyle=document.createElement('style');
+thimoStaffNavStyle.textContent='.staff-question-card{margin:16px 0}.staff-question-form .actions{align-items:center}.finance-edit-grid input,.finance-percent-fields input{min-width:0}.finance-edit-row{min-height:58px}';
+document.head.appendChild(thimoStaffNavStyle);
+
 render();
 </script></body></html>
