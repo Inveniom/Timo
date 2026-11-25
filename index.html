@@ -388,5 +388,42 @@ document.addEventListener('click',e=>{
  else if(a.startsWith('financeClient:')){financeClientId=a.slice(14);page='Financiën';role='staff';render()}
 },true);
 
+
+/* Vereenvoudigde medewerkersomgeving en fictieve productkostendatabase */
+const demoUnitCosts={
+ Thimo265:{label:'Compact',total:85000,parts:[['Chassis en vloerconstructie',9000],['Houtconstructie en draagstructuur',14500],['Isolatie en luchtdichting',6500],['Gevelbekleding',6500],['Dakopbouw en dakbedekking',4500],['Ramen en buitendeuren',6500],['Binnenwanden en binnendeuren',5000],['Keuken',4500],['Badkamer en sanitair',5500],['Elektrische installatie',4500],['Waterleidingen en afvoer',3500],['Verwarming en ventilatie',4500],['Binnenafwerking',4500],['Productie-overhead en kwaliteitscontrole',5500]]},
+ Thimo365:{label:'Comfort',total:105000,parts:[['Chassis en vloerconstructie',10000],['Houtconstructie en draagstructuur',18000],['Isolatie en luchtdichting',8000],['Gevelbekleding',8000],['Dakopbouw en dakbedekking',5500],['Ramen en buitendeuren',8000],['Binnenwanden en binnendeuren',6000],['Keuken',5500],['Badkamer en sanitair',6500],['Elektrische installatie',5000],['Waterleidingen en afvoer',4000],['Verwarming en ventilatie',5500],['Binnenafwerking',5000],['Productie-overhead en kwaliteitscontrole',10000]]},
+ Thimo465:{label:'Ruim',total:125000,parts:[['Chassis en vloerconstructie',12000],['Houtconstructie en draagstructuur',21000],['Isolatie en luchtdichting',9000],['Gevelbekleding',9500],['Dakopbouw en dakbedekking',6500],['Ramen en buitendeuren',9500],['Binnenwanden en binnendeuren',7500],['Keuken',6500],['Badkamer en sanitair',7500],['Elektrische installatie',6000],['Waterleidingen en afvoer',5000],['Verwarming en ventilatie',6500],['Binnenafwerking',6500],['Productie-overhead en kwaliteitscontrole',12000]]}
+};
+const projectCostItems=[['Transport haven Rotterdam → projectlocatie',750,3500],['Hijsen en positioneren',650,1800],['Plaatsing en montage',4500,0],['Fundering / stelvoorziening',8500,0],['Elektrische aansluiting',0,3500],['Water- en rioolaansluiting',0,4500],['Data / internetvoorziening',0,950],['Engineering en voorbereiding',0,6500]];
+const demoEuro=n=>Number(n).toLocaleString('nl-NL',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+function productDatabaseView(){
+ const unitCards=Object.entries(demoUnitCosts).map(([code,u])=>{
+  const sum=u.parts.reduce((a,x)=>a+x[1],0);
+  return '<div class="card product-cost-card"><div class="eyebrow">Standaardunit · fictieve kostprijs</div><h2>'+code+' · '+u.label+'</h2><div class="product-unit-total">'+demoEuro(u.total)+' <small>per unit excl. btw</small></div><table><thead><tr><th>Onderdeel</th><th style="text-align:right">Per unit</th></tr></thead><tbody>'+u.parts.map(x=>'<tr><td>'+esc(x[0])+'</td><td style="text-align:right">'+demoEuro(x[1])+'</td></tr>').join('')+'<tr><th>Totaal onderdelen</th><th style="text-align:right">'+demoEuro(sum)+'</th></tr></tbody></table><p class="muted">De onderdelen zijn een fictieve verdeling van de voorbeeldkostprijs; geen leveranciersoffertes of gevalideerde inkoopprijzen.</p></div>';
+ }).join('');
+ const logistics='<div class="card"><h2>Transport, plaatsing en aansluitingen</h2><p>Deze posten staan los van de fabrieksmatige unitkostprijs.</p><table><thead><tr><th>Kostenonderdeel</th><th style="text-align:right">Variabel per unit</th><th style="text-align:right">Vast per project</th></tr></thead><tbody>'+projectCostItems.map(x=>'<tr><td>'+esc(x[0])+'</td><td style="text-align:right">'+(x[1]?demoEuro(x[1]):'—')+'</td><td style="text-align:right">'+(x[2]?demoEuro(x[2]):'—')+'</td></tr>').join('')+'</tbody></table><p class="muted">Bedragen zijn exclusief btw en gebaseerd op fictieve demo-aannames. Werkelijke kosten hangen onder meer af van afstand, terminal, afmetingen, gewicht, vergunningen, bodem en aansluitpunten.</p></div>';
+ return title('Medewerkersomgeving','Productdatabase en kostprijzen','Eén overzicht van de standaardunits, hun onderdelen en bijkomende projectkosten.')+'<div class="notice"><strong>ALLE BEDRAGEN ZIJN FICTIEF.</strong> Uitsluitend bedoeld om de opbouw van de productdatabase en calculatie te demonstreren. Het zijn geen werkelijke Thimo365-inkoopprijzen, verkoopprijzen, marges of offertes.</div>'+Object.entries(demoUnitCosts).map(([code,u])=>'<div class="card product-unit-summary"><strong>'+code+'</strong><span>'+demoEuro(u.total)+' excl. btw per unit</span><small>'+u.label+'</small></div>').join('')+unitCards+logistics+'<div class="card"><h2>Algemene product- en projectkennis</h2><p>Onderstaand onderdeel bevat de centrale kennisrecords die Timo als basis gebruikt. Projectspecifieke informatie kan hierop aanvullen.</p>'+globalKnowledgeView()+'</div>';
+}
+function staffProjectHub(){
+ const cards=[['AI-vraagfilter','Bundel en beoordeel klantvragen','AI-vraagfilter'],['Projectbesluiten','Leg besluiten en acties vast','Projectbesluiten'],['Commerciële kansen','Volg kansen en vervolgstappen','Commerciële kansen'],['Klantvragen','Behandel openstaande vragen','Klantvragen']];
+ return title('Medewerkersomgeving','Projectbeheer','De dagelijkse projecttools zijn samengebracht onder één hoofdtab.')+'<div class="grid">'+cards.map(c=>'<div class="card"><h2>'+c[0]+'</h2><p>'+c[1]+'</p>'+button('Open onderdeel','go:'+c[2])+'</div>').join('')+'</div><div class="card"><h2>Openstaande klantvragen</h2>'+(K.queue.filter(q=>q.status==='Open').map(q=>'<div class="line"><span>'+esc(q.text)+'</span><span class="tag">Open</span></div>').join('')||'<p>Geen openstaande vragen in deze demo.</p>')+'</div>';
+}
+function compactStaffDashboard(){
+ return title('Medewerkersomgeving','Thimo365 projectregie','Een helder startpunt voor klanten, producten en projectacties.')+'<div class="grid">'+metric(Object.keys(demoClients).length,'Demo-klanten')+metric(Object.values(K.chats).reduce((a,x)=>a+x.length,0),'Gespreksbeurten')+metric(K.queue.filter(q=>q.status==='Open').length,'Open vragen')+'</div><div class="grid"><div class="card"><h2>Klanten</h2><p>Bekijk per klant de projectstatus, configuratie en gesprekken.</p>'+button('Naar klanten','go:Klanten')+'</div><div class="card"><h2>Productdatabase</h2><p>Bekijk fictieve kostprijzen per unit en per onderdeel.</p>'+button('Naar productdatabase','go:Productdatabase')+'</div><div class="card"><h2>Projectbeheer</h2><p>Werk klantvragen, besluiten en commerciële acties bij.</p>'+button('Naar projectbeheer','go:Projectbeheer')+'</div></div>';
+}
+menus.staff=['Dashboard','Klanten','Productdatabase','Projectbeheer'];
+views.Dashboard=compactStaffDashboard;
+views.Klanten=customerOverview;
+views.Productdatabase=productDatabaseView;
+views.Projectbeheer=staffProjectHub;
+views.Klantprojecten=customerOverview;
+for(const sub of ['AI-vraagfilter','Projectbesluiten','Commerciële kansen','Klantvragen']){
+ if(typeof views[sub]==='function'){
+  const original=views[sub];
+  views[sub]=()=>'<div class="actions">'+button('← Terug naar Projectbeheer','go:Projectbeheer',true)+'</div>'+original();
+ }
+}
+
 render();
 </script></body></html>
