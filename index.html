@@ -745,8 +745,8 @@ conceptView=function(){
  let html=conceptViewBeforeEdit();
  const f=conceptFit(conceptData());
  if(!f.ready)return html;
- html=html.replace('<div class="card"><div class="eyebrow">Conceptuele plattegrond</div><h2>Ruimtelijke opstelling op het terrein</h2>'+((html.match(/<div class="concept-metrics">[\s\S]*?<\/div>/)||[])[0]||'')+conceptPlanSvg(f),
- '<div class="card concept-editor-card"><div class="eyebrow">Interactieve terreinplanner</div><h2>Plaats en draai uw units zelf</h2><p>Selecteer een unit en sleep deze naar de gewenste plek. De positie en draairichting worden automatisch bewaard op dit apparaat.</p>'+conceptEditorControls(f)+conceptPlanSvg(f));
+ html=html.replace('<div class="card"><div class="eyebrow">Conceptuele plattegrond</div><h2>Ruimtelijke opstelling op het terrein</h2>','<div class="card concept-editor-card"><div class="eyebrow">Interactieve terreinplanner</div><h2>Plaats en draai uw units zelf</h2><p>Selecteer een unit en sleep deze naar de gewenste plek. De positie en draairichting worden automatisch bewaard op dit apparaat.</p>');
+ html=html.replace('<svg class="concept-plan editable-site-plan"',conceptEditorControls(f)+'<svg class="concept-plan editable-site-plan"');
  return html;
 };
 const conceptEditorStyle=document.createElement('style');
