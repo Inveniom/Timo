@@ -972,6 +972,17 @@ conceptLayout=function(f){
  const next={units,selected:units[0]?.id||null,unitLength:f.unitLength,unitWidth:f.unitWidth};
  saveConceptLayout(next);return next;
 };
+/* Bewaar een tijdelijke ongelijke verdeling terwijl de gebruiker de aantallen per laag invoert. */
+thimoFloorCounts=function(){
+ const floors=thimoFloorCount(),total=Math.max(1,Number(selectedUnitCount)||1);
+ let counts=Array.isArray(unitConfiguration.floorUnitCounts)?unitConfiguration.floorUnitCounts.map(n=>Math.max(0,Math.min(100,Math.floor(Number(n)||0)))):[];
+ if(counts.length!==floors){
+  counts=Array.from({length:floors},(_,i)=>Math.floor(total/floors)+(i<total%floors?1:0));
+  unitConfiguration.floorUnitCounts=counts;
+  if(typeof saveClientUnitSettings==='function')saveClientUnitSettings();
+ }
+ return counts;
+};
 const thimoOldConceptFit=conceptFit;
 conceptFit=function(c){
  const f=thimoOldConceptFit(c);if(!f.ready)return f;
