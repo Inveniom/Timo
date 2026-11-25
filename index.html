@@ -333,7 +333,8 @@ const demoClients={
  brink:{name:'De Brink',organisation:'Gemeente',location:'Amersfoort (fictief)',units:36,status:'Haalbaarheidsfase',unit:'Thimo265'},
  park:{name:'Parkzicht',organisation:'Zorgorganisatie',location:'Arnhem (fictief)',units:48,status:'Voorbereiding',unit:'Thimo465'}
 };
-let selectedClientId=localStorage.getItem('timo-selected-client')||'groene';
+let selectedClientId='park';
+localStorage.setItem('timo-selected-client',selectedClientId);
 if(!demoClients[selectedClientId])selectedClientId='groene';
 function loadClientUnitSettings(){
  const key='timo-client-config-'+selectedClientId;
