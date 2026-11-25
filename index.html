@@ -523,4 +523,78 @@ for(const sub of ['AI-vraagfilter','Projectbesluiten','Commerciële kansen','Kla
 if(!views.Klantvragen)views.Klantvragen=()=>title('Projectbeheer','Klantvragen','Open vragen die door medewerkers opgevolgd moeten worden.')+'<div class="card">'+(K.queue.map(q=>'<div class="line"><div>'+esc(q.text)+'<p class="muted">'+esc(demoClients[q.project]?.name||q.project)+' · '+esc(q.status)+'</p></div>'+button(q.status==='Open'?'Afhandelen':'Heropenen','kqueue:'+q.id,true)+'</div>').join('')||'<p>Er staan nog geen klantvragen in de wachtrij.</p>')+'</div>';
 
 render();
+
+/* Apart concepttabblad: terreininpassing, ruimtelijke fit en massa */
+const conceptStyle=document.createElement('style');
+conceptStyle.textContent=`
+.concept-tabs-note{background:#f0f4ec;border-left:4px solid #829a78;padding:14px 18px;border-radius:5px;margin:16px 0}
+.concept-plan{width:100%;height:auto;display:block;background:#f5f7f2;border:1px solid #dce5d8;border-radius:8px}
+.concept-status{padding:16px 18px;border-radius:7px;margin:16px 0;background:#f1f4ee;border:1px solid #dce5d8}
+.concept-status.fit{background:#edf4e9;border-color:#8da982;color:#294b38}
+.concept-status.no-fit{background:#fbefeb;border-color:#c98c7e;color:#773d32}
+.concept-status.pending{background:#f4f1e7;border-color:#c7b98d;color:#6c5b32}
+.concept-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.concept-metrics>div{background:#f1f4ee;padding:14px;border-radius:6px}
+.concept-metrics strong,.concept-metrics small{display:block}.concept-metrics strong{font-size:21px;color:#294b38}.concept-metrics small{font-size:11px;color:#68776c}
+.concept-map{height:260px;border:1px solid #dce5d8;border-radius:7px;overflow:hidden;margin:14px 0}
+.concept-map iframe{width:100%;height:100%;border:0}
+@media(max-width:700px){.concept-metrics{grid-template-columns:1fr 1fr}.concept-map{height:220px}}
+`;
+document.head.appendChild(conceptStyle);
+function conceptData(){
+ try{return JSON.parse(localStorage.getItem('thimo-concept-'+selectedClientId))||{length:'',width:'',setback:'3',gap:'3'}}catch{return {length:'',width:'',setback:'3',gap:'3'}}
+}
+function saveConceptData(d){localStorage.setItem('thimo-concept-'+selectedClientId,JSON.stringify(d))}
+function conceptFit(c){
+ const u=standardUnits[selectedStandardUnit]||standardUnits.Thimo365;
+ const L=Number(c.length),W=Number(c.width),setback=Math.max(0,Number(c.setback)||0),gap=Math.max(0,Number(c.gap)||0);
+ if(!(L>0&&W>0))return {ready:false};
+ const usableL=L-2*setback,usableW=W-2*setback;
+ const orientations=[
+  {cols:Math.floor((usableL+gap)/(u.length+gap)),rows:Math.floor((usableW+gap)/(5.4+gap)),a:u.length,b:5.4,rot:false},
+  {cols:Math.floor((usableL+gap)/(5.4+gap)),rows:Math.floor((usableW+gap)/(u.length+gap)),a:5.4,b:u.length,rot:true}
+ ].map(x=>({...x,capacity:Math.max(0,x.cols)*Math.max(0,x.rows)}));
+ const best=orientations.sort((a,b)=>b.capacity-a.capacity)[0];
+ return {ready:true,usableL,usableW,capacity:best.capacity,orientation:best,required:selectedUnitCount,fit:best.capacity>=selectedUnitCount,shortage:Math.max(0,selectedUnitCount-best.capacity),unitLength:u.length,unitWidth:5.4,plotL:L,plotW:W,setback,gap};
+}
+function conceptPlanSvg(f){
+ const W=Number(f.plotW),L=Number(f.plotL),o=f.orientation,scale=Math.min(760/(L+12),460/(W+12)),pad=42,sw=L*scale,sh=W*scale;
+ const ox=pad,oy=pad;
+ let units='';
+ if(o.capacity>0){
+  for(let r=0;r<Math.min(o.rows,20);r++)for(let col=0;col<Math.min(o.cols,20);col++){
+   const x=ox+f.setback*scale+col*(o.a+f.gap)*scale,y=oy+f.setback*scale+r*(o.b+f.gap)*scale;
+   const ww=o.a*scale,hh=o.b*scale;
+   units+='<g><rect x="'+x+'" y="'+y+'" width="'+ww+'" height="'+hh+'" rx="2" fill="#dce8d4" stroke="#294b38" stroke-width="2"/><path d="M'+(x+ww*.5)+' '+y+'V'+(y+hh)+'" stroke="#8da184" stroke-width="1.5"/><text x="'+(x+ww/2)+'" y="'+(y+hh/2+4)+'" text-anchor="middle" font-size="'+Math.max(8,Math.min(13,scale*1.8))+'" fill="#294b38">'+(r*o.cols+col+1)+'</text></g>';
+  }
+ }
+ const viewW=sw+pad*2,viewH=sh+pad*2+30;
+ return '<svg class="concept-plan" viewBox="0 0 '+viewW+' '+viewH+'" role="img" aria-label="Conceptuele terreinplattegrond met '+Math.min(f.capacity,f.required)+' units"><rect width="100%" height="100%" fill="#f6f8f3"/><rect x="'+ox+'" y="'+oy+'" width="'+sw+'" height="'+sh+'" fill="#e9eee3" stroke="#536b57" stroke-width="3"/><rect x="'+(ox+f.setback*scale)+'" y="'+(oy+f.setback*scale)+'" width="'+Math.max(0,sw-2*f.setback*scale)+'" height="'+Math.max(0,sh-2*f.setback*scale)+'" fill="none" stroke="#b38d61" stroke-dasharray="6 4" stroke-width="1.5"/>'+units+'<text x="'+ox+'" y="'+(viewH-10)+'" font-size="12" fill="#536b57">Terrein '+L+' × '+W+' m · indicatief · stippellijn = ingestelde marge</text></svg>';
+}
+function conceptView(){
+ const c=conceptData(),fit=conceptFit(c),client=demoClients[selectedClientId],loc=logisticsData(),u=standardUnits[selectedStandardUnit]||standardUnits.Thimo365;
+ const address=loc.result?.display||loc.address||client.location;
+ const floorCount=Math.max(1,Math.min(4,Number.parseInt(String(unitConfiguration.floors||'1').match(/[0-9]+/)?.[0]||'1',10)));
+ const map=loc.result?'<div class="concept-map"><iframe title="Projectlocatie op kaart" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox='+loc.result.bbox+'&layer=mapnik&marker='+loc.result.lat+'%2C'+loc.result.lon+'"></iframe></div>':'<div class="notice">De locatie uit stap 3 is nog niet geografisch gecontroleerd. Vul het afleveradres daar in en kies ‘Controleer locatie’ om de kaart hier te tonen.</div>';
+ let status='<div class="concept-status pending"><strong>Terreincheck nog niet mogelijk</strong><p>Vul de bruikbare terreinlengte en -breedte in. Thimo kan dan een eerste geometrische passing berekenen.</p></div>';
+ if(fit.ready)status=fit.fit
+  ?'<div class="concept-status fit"><strong>Voorlopige geometrische passing: '+fit.required+' van '+fit.required+' units passen</strong><p>Op basis van de ingevoerde terreinmaten, een marge van '+fit.setback+' m rondom en '+fit.gap+' m tussen de units. Dit is nog geen toets op perceelgrenzen, brandroutes, parkeren, groen, daglicht, bestemmingsplan of vergunningen.</p></div>'
+  :'<div class="concept-status no-fit"><strong>Let op: de units passen niet op het ingevoerde terrein</strong><p>In de gekozen opstelling is ruimte voor maximaal '+fit.capacity+' van de '+fit.required+' units. Er is ruimte tekort voor '+fit.shortage+' units. Vergroot het terrein, verlaag het aantal units of onderzoek een andere configuratie/bouwlaag.</p></div>';
+ const plan=fit.ready?conceptPlanSvg(fit):'<div class="logistics-map-placeholder">De conceptuele terreinplattegrond verschijnt zodra de terreinmaten zijn ingevuld.</div>';
+ const metrics=fit.ready?'<div class="concept-metrics"><div><strong>'+fit.capacity+'</strong><small>Maximaal aantal op basis van rechthoekige passing</small></div><div><strong>'+fit.required+'</strong><small>Gewenst aantal units</small></div><div><strong>'+Math.round(fit.usableL*fit.usableW).toLocaleString('nl-NL')+' m²</strong><small>Bruikbaar terrein na marges</small></div></div>':'';
+ return title('Klantomgeving · conceptontwerp','Concept & terreininpassing','Een afzonderlijk ontwerptabblad voor de ruimtelijke opzet op de projectlocatie.')+
+ '<div class="card"><div class="eyebrow">Projectlocatie uit stap 3</div><h2>'+esc(client.name)+'</h2><p><strong>Locatie:</strong> '+esc(address)+'</p>'+map+'<p class="muted">De kaart markeert de opgegeven locatie. De kaart toont niet automatisch de juridische perceelgrens of de werkelijk beschikbare bouwruimte.</p></div>'+
+ '<div class="card"><div class="eyebrow">Terreinmaten en uitgangspunten</div><h2>Voer de beschikbare terreinruimte in</h2><p>Gebruik de netto beschikbare rechthoekige ruimte voor de units, niet automatisch de volledige kadastrale perceeloppervlakte.</p><div class="fields"><div><label for="siteLength">Beschikbare terreinlengte (m)</label><input id="siteLength" data-site-dimension="length" type="number" min="1" step="0.5" value="'+esc(c.length)+'" placeholder="Bijv. 80"></div><div><label for="siteWidth">Beschikbare terreinbreedte (m)</label><input id="siteWidth" data-site-dimension="width" type="number" min="1" step="0.5" value="'+esc(c.width)+'" placeholder="Bijv. 45"></div><div><label for="siteSetback">Vrije marge rondom (m)</label><input id="siteSetback" data-site-dimension="setback" type="number" min="0" step="0.5" value="'+esc(c.setback)+'"></div><div><label for="unitGap">Ruimte tussen units (m)</label><input id="unitGap" data-site-dimension="gap" type="number" min="0" step="0.5" value="'+esc(c.gap)+'"></div></div><div class="concept-tabs-note">Actieve configuratie: <strong>'+selectedStandardUnit+'</strong> · '+selectedUnitCount+' units · '+u.length+' × 5,4 m per unit (indicatief) · '+floorCount+' bouwlaag/bouwlagen.</div></div>'+
+ status+'<div class="card"><div class="eyebrow">Conceptuele plattegrond</div><h2>Ruimtelijke opstelling op het terrein</h2>'+metrics+plan+'<p class="muted">De plattegrond is een eenvoudige rechthoekige capaciteitsstudie. Toegang, brandweerroute, parkeren, groen, waterberging, erfgrenzen, kabels/leidingen, bouwvlakken en onderlinge privacy zijn nog niet ingetekend of getoetst.</p></div>'+
+ '<div class="card"><div class="eyebrow">Massa-impressie</div><h2>Indicatieve bouwmassa</h2>'+makeIsometricImpression(u,floorCount)+'<p class="muted">Schematische massa-impressie op basis van de gekozen unit en bouwlagen. Geen maatvaste visualisatie, constructieve toets of weergave van de werkelijke omgeving.</p></div>'+
+ '<div class="notice"><strong>Locatie- en haalbaarheidsvoorbehoud.</strong> De locatie uit stap 3 wordt gebruikt als geografisch referentiepunt. Voor een betrouwbare inpassing zijn een actuele kadastrale ondergrond, terreinmeting, hoogteverschillen, bomen, kabels en leidingen, toegangen, rooilijnen, omgevingsplan en brandweer-/vluchtroutes nodig. De hier getoonde passing is uitsluitend een eerste geometrische indicatie en geen vergunning- of bouwbaarheidsoordeel.</div>';
+}
+menus.client=['AI-assistent','Concept & terreininpassing'];
+views['Concept & terreininpassing']=conceptView;
+document.addEventListener('change',e=>{
+ if(e.target?.dataset?.siteDimension){
+  const c=conceptData();c[e.target.dataset.siteDimension]=e.target.value;saveConceptData(c);render();
+ }
+});
+render();
 </script></body></html>
