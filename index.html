@@ -1100,5 +1100,71 @@ document.addEventListener('change',e=>{
  thimoSyncStepOneTotal();
 },true);
 
+
+/* Bewerkbare projectfinanciën en een afzonderlijk medewerker-vraagoverzicht. */
+function thimoFinanceOverrides(id){
+ try{return JSON.parse(localStorage.getItem('thimo-finance-'+id)||'null')}catch{return null}
+}
+function demoFinancials(id){
+ const c=demoClients[id],unit=c.unit||'Thimo365',n=Number(c.units)||0,unitPrices={Thimo265:85000,Thimo365:105000,Thimo465:125000};
+ const base=[['Units',(unitPrices[unit]||105000)*n],['Transport',3500+750*n],['Hijsen en positioneren',1800+650*n],['Plaatsing en montage',4500*n],['Fundering',8500*n],['Elektrische aansluiting',3500],['Water en riool',4500],['Data',950],['Engineering',6500]];
+ const saved=thimoFinanceOverrides(id),items=base.map((x,i)=>[x[0],saved&&Array.isArray(saved.items)&&Number.isFinite(Number(saved.items[i]))?Math.max(0,Number(saved.items[i])):x[1]]);
+ const reservePct=saved&&Number.isFinite(Number(saved.reservePct))?Math.max(0,Math.min(100,Number(saved.reservePct))):10;
+ const vatPct=saved&&Number.isFinite(Number(saved.vatPct))?Math.max(0,Math.min(100,Number(saved.vatPct))):21;
+ const sub=items.reduce((a,b)=>a+b[1],0),reserve=Math.round(sub*reservePct/100),ex=sub+reserve,vat=Math.round(ex*vatPct/100);
+ const euro=x=>Number(x).toLocaleString('nl-NL',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+ return {items,sub,reserve,reservePct,vatPct,ex,vat,total:ex+vat,euro};
+}
+function financeDetail(id){
+ const c=demoClients[id],f=demoFinancials(id);
+ return '<div class="card"><div class="eyebrow">Bewerkbare kostenraming · '+esc(c.name)+'</div><h2>'+esc(c.unit)+' · '+c.units+' units</h2><p>Pas de bedragen per kostenpost aan. De totalen worden automatisch opnieuw berekend en lokaal per project bewaard.</p><div class="finance-edit-grid">'+f.items.map((x,i)=>'<label class="finance-edit-row"><span>'+esc(x[0])+'</span><span class="finance-edit-input"><span>€</span><input type="number" min="0" step="0.01" value="'+Number(x[1])+'" data-finance-item="'+i+'" aria-label="'+esc(x[0])+'"></span></label>').join('')+'</div><div class="fields finance-percent-fields"><div><label for="financeReserve">Onvoorzien (%)</label><input id="financeReserve" type="number" min="0" max="100" step="0.5" value="'+f.reservePct+'" data-finance-percent="reservePct"></div><div><label for="financeVat">Btw (%)</label><input id="financeVat" type="number" min="0" max="100" step="0.5" value="'+f.vatPct+'" data-finance-percent="vatPct"></div></div><table><tbody><tr><td>Subtotaal kosten</td><td style="text-align:right">'+f.euro(f.sub)+'</td></tr><tr><td>Onvoorzien ('+f.reservePct+'%)</td><td style="text-align:right">'+f.euro(f.reserve)+'</td></tr><tr><th>Totaal excl. btw</th><th style="text-align:right">'+f.euro(f.ex)+'</th></tr><tr><td>Btw ('+f.vatPct+'%)</td><td style="text-align:right">'+f.euro(f.vat)+'</td></tr><tr><th>Totaal incl. btw</th><th style="text-align:right">'+f.euro(f.total)+'</th></tr></tbody></table><p class="muted">De aangepaste bedragen worden alleen in deze browser opgeslagen. Het blijven interne ramingen en geen offertes of gevalideerde werkelijke kosten.</p><div class="actions"><button type="button" class="alt" data-finance-reset="'+esc(id)+'">Herstel fictieve basisbedragen</button></div></div>';
+}
+function financeView(){
+ const ids=Object.keys(demoClients),all=ids.map(id=>({id,c:demoClients[id],f:demoFinancials(id)})),total=all.reduce((a,x)=>a+x.f.total,0);
+ const chosen=financeClientId&&demoClients[financeClientId]?financeClientId:null;
+ return title('Medewerkersomgeving','Financiën','Bewerk per project de kostenposten, opslagen en btw. Alle standaardbedragen zijn fictieve demo-aannames.')+'<div class="notice"><strong>Let op: uitsluitend fictieve bedragen.</strong> Dit zijn geen werkelijke offertes, verkoopprijzen, inkoopkosten of marges van Thimo365. Aangepaste bedragen worden lokaal in deze browser opgeslagen.</div><div class="grid">'+metric(euroCompact(total),'Totale demo-raming incl. btw')+metric(ids.length,'Projectramingen')+metric(euroCompact(all.reduce((a,x)=>a+x.f.ex,0)),'Totaal excl. btw')+'</div><div class="card"><h2>Financieel overzicht per klant</h2><table><thead><tr><th>Klant</th><th>Units</th><th>Excl. btw</th><th>Incl. btw</th><th></th></tr></thead><tbody>'+all.map(x=>'<tr><td>'+esc(x.c.name)+'</td><td>'+x.c.units+'</td><td>'+x.f.euro(x.f.ex)+'</td><td><strong>'+x.f.euro(x.f.total)+'</strong></td><td>'+button('Bewerken','financeClient:'+x.id,true)+'</td></tr>').join('')+'</tbody></table></div>'+(chosen?financeDetail(chosen):'<div class="card"><h2>Kies een project</h2><p>Open de kostenopbouw via Bewerken in het overzicht.</p></div>');
+}
+let staffQuestionProject='all';
+function staffQuestionsView(){
+ const ids=Object.keys(demoClients),all=K.queue.filter(q=>demoClients[q.project]),filtered=staffQuestionProject==='all'?all:all.filter(q=>q.project===staffQuestionProject);
+ const open=filtered.filter(q=>q.status==='Open').length,answered=filtered.filter(q=>q.answer&&q.answer.trim()).length;
+ return title('Medewerkersomgeving','Vragen aan medewerker','Bekijk vragen die klanten vanuit hun projectgesprek hebben voorgelegd en beantwoord ze per project.')+'<div class="card"><div class="fields"><div><label for="staffQuestionProject">Project selecteren</label><select id="staffQuestionProject"><option value="all" '+(staffQuestionProject==='all'?'selected':'')+'>Alle projecten</option>'+ids.map(id=>'<option value="'+esc(id)+'" '+(staffQuestionProject===id?'selected':'')+'>'+esc(demoClients[id].name)+'</option>').join('')+'</select></div></div><div class="grid">'+metric(filtered.length,'Vragen in overzicht')+metric(open,'Open vragen')+metric(answered,'Beantwoorde vragen')+'</div></div>'+ (filtered.length?filtered.map(q=>{
+ const c=demoClients[q.project],done=!!(q.answer&&q.answer.trim());
+ return '<article class="card staff-question-card"><div class="eyebrow">'+esc(c?.name||q.project)+'</div><div class="staff-question-meta"><span class="tag">'+esc(done?'Beantwoord':q.status||'Open')+'</span>'+(q.createdAt?'<span class="muted">'+esc(q.createdAt)+'</span>':'')+'</div><h3>Vraag van de klant</h3><p class="staff-question-text">'+esc(q.text)+'</p><form class="staff-question-form" data-staff-question-form="'+esc(q.id)+'"><label for="staffAnswer-'+esc(q.id)+'">Antwoord van Thimo365 / medewerker</label><textarea id="staffAnswer-'+esc(q.id)+'" name="answer" rows="4" placeholder="Schrijf hier het antwoord of de terugkoppeling…">'+esc(q.answer||'')+'</textarea><div class="actions"><button type="submit">Antwoord opslaan</button>'+(done?'<button type="button" class="alt" data-question-reopen="'+esc(q.id)+'">Markeer als open</button>':'')+'</div></form></article>';
+ }).join(''):'<div class="card"><p>Er zijn voor dit project nog geen vragen voor de medewerker ingediend. Klanten kunnen in hun gesprek een bericht kiezen en op ‘Voorleggen aan medewerker’ klikken.</p></div>');
+}
+menus.staff=menus.staff.map(x=>x==='Klantvragen'?'Vragen aan medewerker':x);
+views['Vragen aan medewerker']=staffQuestionsView;
+views.Klantvragen=staffQuestionsView;
+document.addEventListener('change',e=>{
+ if(e.target?.id==='staffQuestionProject'){staffQuestionProject=e.target.value;render();return}
+ const item=e.target?.dataset?.financeItem,percent=e.target?.dataset?.financePercent;
+ if(item===undefined&&percent===undefined)return;
+ const id=financeClientId;if(!id||!demoClients[id])return;
+ const current=thimoFinanceOverrides(id)||{items:demoFinancials(id).items.map(x=>x[1]),reservePct:10,vatPct:21};
+ if(item!==undefined){const i=Number(item);if(i>=0&&i<current.items.length)current.items[i]=Math.max(0,Number(e.target.value)||0)}
+ if(percent){current[percent]=Math.max(0,Math.min(100,Number(e.target.value)||0))}
+ localStorage.setItem('thimo-finance-'+id,JSON.stringify(current));render();
+},true);
+document.addEventListener('click',e=>{
+ const reset=e.target.closest?.('[data-finance-reset]')?.dataset.financeReset;
+ if(reset){localStorage.removeItem('thimo-finance-'+reset);financeClientId=reset;render();return}
+ const reopen=e.target.closest?.('[data-question-reopen]')?.dataset.questionReopen;
+ if(reopen){const q=K.queue.find(x=>x.id===reopen);if(q){q.status='Open';q.answer='';ks();render()}}
+},true);
+document.addEventListener('submit',e=>{
+ const form=e.target.closest?.('[data-staff-question-form]');
+ if(!form)return;
+ e.preventDefault();e.stopImmediatePropagation();
+ const id=form.dataset.staffQuestionForm,q=K.queue.find(x=>x.id===id);
+ if(!q)return;
+ const answer=String(new FormData(form).get('answer')||'').trim();
+ q.answer=answer;q.status=answer?'Beantwoord':'Open';q.answeredAt=answer?new Date().toISOString().slice(0,10):null;
+ ks();render();
+},true);
+const thimoFinanceStyle=document.createElement('style');
+thimoFinanceStyle.textContent='.finance-edit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:18px 0}.finance-edit-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;background:#f5f8f8;border:1px solid #e1e9eb;border-radius:9px}.finance-edit-row>span:first-child{font-weight:600}.finance-edit-input{display:flex;align-items:center;gap:5px;min-width:125px}.finance-edit-input input{width:115px;text-align:right}.finance-percent-fields{max-width:540px;margin:16px 0}.staff-question-card{border-left:4px solid #1ba59b}.staff-question-meta{display:flex;gap:12px;align-items:center;margin:10px 0}.staff-question-text{padding:14px;background:#f3f7f7;border-radius:9px;white-space:pre-wrap}.staff-question-form textarea{width:100%}';
+document.head.appendChild(thimoFinanceStyle);
+
 render();
 </script></body></html>
