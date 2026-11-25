@@ -432,7 +432,7 @@ function chatView(){
  +'<form id="botform" class="customer-composer"><label for="botq"><strong>Uw bericht aan Thimo</strong></label><div class="botinput"><textarea id="botq" required rows="3" placeholder="Beschrijf uw vraag of wensen voor '+esc(client.name)+'…"></textarea><button type="submit">Verstuur bericht</button></div></form>'
  +'<div id="botStatus" class="muted" role="status">'+esc(botConnectionStatus||'Thimo is gekoppeld aan de beveiligde AI-dienst.')+'</div><div class="actions">'+button('Nieuw gesprek','botReset',true)+'</div></section>'
  +'<section class="card logistics-section"><div class="eyebrow">Stap 3 · Transport en bereikbaarheid</div><h2>LOGISTIEK · SCHIP NAAR PROJECTLOCATIE</h2>'+logisticsPanel()+'</section>'
- +'<section class="customer-proposal-section"><div class="eyebrow">Stap 4 · Ontwerp en kosten</div><h2>VOORLOPIG KLANTVOORSTEL · '+esc(client.name.toUpperCase())+'</h2>'+(proposal||'<div class="card customer-results-empty"><strong>Het voorlopige klantvoorstel verschijnt hier.</strong><p>Na uw gesprek met Thimo wordt hier de ontwerpuitwerking met 3D-impressie, specificaties en indicatieve kosten getoond.</p></div>')+'</section>'
+ +'<section class="customer-proposal-section"><div class="eyebrow">Stap 4 · Ontwerp en kosten</div><h2>VOORLOPIG KLANTVOORSTEL · '+esc(client.name.toUpperCase())+'</h2>'+(proposal||'<div class="card customer-results-empty"><strong>Het voorlopige klantvoorstel verschijnt hier.</strong><p>Na uw gesprek met Thimo wordt hier de ontwerpuitwerking met 3D-impressie, specificaties en indicatieve kosten getoond.</p></div>')+'</section>'+conceptInline()
  +'<div class="notice">Deze klantomgeving toont uitsluitend een lokale demo. Prijsbedragen en klantprofielen zijn fictief. Toegang per klant moet voor echt gebruik nog met individuele accounts en serverautorisatie worden beveiligd.</div>';
 }
 function customerOverview(){
@@ -596,5 +596,112 @@ document.addEventListener('change',e=>{
   const c=conceptData();c[e.target.dataset.siteDimension]=e.target.value;saveConceptData(c);render();
  }
 });
+
+/* Herordening klantomgeving en medewerkers-projectbeheer */
+menus.client=['AI-assistent'];
+function conceptInline(){
+ const html=conceptView();
+ const start=html.indexOf('<div class="card"><div class="eyebrow">Projectlocatie uit stap 3');
+ return start>=0?'<section class="customer-concept-section"><div class="concept-inline-heading"><span>Stap 5 · Ruimtelijk concept</span><h2>Concept & terreininpassing</h2><p>Bekijk hoe de gekozen units zich verhouden tot de beschikbare projectruimte.</p></div>'+html.slice(start)+'</section>':'';
+}
+function customerOverview(){
+ const ids=Object.keys(demoClients),turns=Object.values(K.chats).flat();
+ const cards=ids.map(id=>{
+  const c=demoClients[id],n=K.chats[id]?.length||0,records=K.records.filter(r=>r.project===id).length,open=K.queue.filter(q=>q.project===id&&q.status==='Open').length;
+  return '<article class="card customer-card"><div class="customer-card-top"><span class="customer-avatar">'+esc(c.name.slice(0,1).toUpperCase())+'</span><span class="customer-phase">'+esc(c.status||'Nieuw project')+'</span></div><div class="eyebrow">'+esc(c.organisation||'Organisatie')+'</div><h2>'+esc(c.name)+'</h2><p>'+esc(c.location||'Locatie nog niet ingevuld')+'</p><div class="customer-stats"><div><strong>'+Number(c.units||0)+'</strong><small>Units</small></div><div><strong>'+n+'</strong><small>Gesprekken</small></div><div><strong>'+open+'</strong><small>Open vragen</small></div></div><div class="actions">'+button('Open project','clientOpen:'+id)+button('Financiën','financeClient:'+id,true)+'</div></article>';
+ }).join('');
+ return title('Medewerkersomgeving','Klanten & projecten','Beheer alle opdrachtgevers vanuit één centrale projectlijst. Voeg eenvoudig nieuwe klanten en projecten toe.')+
+ '<div class="grid staff-summary">'+metric(ids.length,'Klanten en projecten')+metric(turns.length,'Gespreksbeurten')+metric(K.queue.filter(q=>q.status==='Open').length,'Open klantvragen')+'</div>'+
+ '<div class="customer-grid">'+cards+'</div>'+
+ '<section class="card create-customer-card"><div class="eyebrow">Nieuwe opdrachtgever</div><h2>Klant of project toevoegen</h2><p>Maak een apart projectprofiel aan. De gegevens worden in deze demo lokaal in deze browser bewaard.</p><form id="createClientForm"><div class="fields"><div><label for="newClientName">Project- / klantnaam *</label><input id="newClientName" name="name" required placeholder="Bijv. Woonpark De Linde"></div><div><label for="newClientOrganisation">Type organisatie</label><input id="newClientOrganisation" name="organisation" placeholder="Bijv. Woningcorporatie"></div><div><label for="newClientLocation">Projectlocatie</label><input id="newClientLocation" name="location" placeholder="Plaats of projectadres"></div><div><label for="newClientUnits">Aantal units</label><input id="newClientUnits" name="units" type="number" min="1" max="1000" value="1"></div><div><label for="newClientUnit">Standaardunit</label><select id="newClientUnit" name="unit"><option>Thimo265</option><option selected>Thimo365</option><option>Thimo465</option></select></div><div><label for="newClientStatus">Projectfase</label><select id="newClientStatus" name="status"><option>Nieuwe aanvraag</option><option>Intake en ontwerp</option><option>Haalbaarheidsfase</option><option>Voorbereiding</option><option>In uitvoering</option><option>Opgeleverd</option></select></div></div><div class="actions"><button type="submit">Klant en project aanmaken</button></div><p class="muted">Let op: dit is lokale demo-opslag. Voor productie zijn centrale databaseopslag, gebruikersaccounts en toegangsrechten nodig.</p></form></section>';
+}
+function staffProjectHub(){
+ const ids=Object.keys(demoClients),open=K.queue.filter(q=>q.status==='Open');
+ const cards=[['AI-vraagfilter','Bundel en beoordeel vragen uit klantgesprekken','AI-vraagfilter','✦'],['Projectbesluiten','Leg afspraken, besluiten en acties vast','Projectbesluiten','✓'],['Commerciële kansen','Volg aanvragen en vervolgstappen','Commerciële kansen','↗'],['Klantvragen','Behandel openstaande klantvragen','Klantvragen','?']];
+ return title('Medewerkersomgeving','Projectbeheer','Houd overzicht over de voortgang, klantvragen en projectacties.')+
+ '<div class="grid staff-summary">'+metric(ids.length,'Actieve klantprojecten')+metric(open.length,'Open klantvragen')+metric(Object.values(K.chats).reduce((a,x)=>a+x.length,0),'Gespreksbeurten')+'</div>'+
+ '<div class="project-tool-grid">'+cards.map(c=>'<article class="card project-tool-card"><span class="project-tool-icon">'+c[3]+'</span><h2>'+c[0]+'</h2><p>'+c[1]+'</p>'+button('Open onderdeel','go:'+c[2])+'</article>').join('')+'</div>'+
+ '<div class="card"><div class="eyebrow">Projectportefeuille</div><h2>Recente klantprojecten</h2>'+ids.slice(0,8).map(id=>{const c=demoClients[id];return '<div class="line"><div><strong>'+esc(c.name)+'</strong><div class="muted">'+esc(c.location||'Locatie onbekend')+' · '+Number(c.units||0)+' units</div></div><span class="tag">'+esc(c.status||'Nieuw')+'</span>'+button('Open','clientOpen:'+id,true)+'</div>'}).join('')+
+ '<div class="actions">'+button('Alle klanten beheren','go:Klanten')+'</div></div>'+
+ '<div class="card"><div class="eyebrow">Actie vereist</div><h2>Openstaande klantvragen</h2>'+(open.map(q=>'<div class="line"><span>'+esc(q.text)+'</span><span class="tag">Open</span></div>').join('')||'<p>Er staan momenteel geen open klantvragen klaar.</p>')+'</div>';
+}
+function persistExtraClients(){
+ try{
+  const saved=JSON.parse(localStorage.getItem('thimo-extra-clients')||'{}');
+  for(const [id,c] of Object.entries(saved))if(!demoClients[id])demoClients[id]=c;
+ }catch{}
+}
+persistExtraClients();
+document.addEventListener('submit',e=>{
+ if(e.target?.id!=='createClientForm')return;
+ e.preventDefault();
+ const fd=new FormData(e.target),name=String(fd.get('name')||'').trim();
+ if(!name)return;
+ const id='project-'+Date.now().toString(36);
+ const c={name,organisation:String(fd.get('organisation')||'Opdrachtgever').trim(),location:String(fd.get('location')||'Locatie nog niet ingevuld').trim(),units:Math.max(1,Math.min(1000,Number(fd.get('units'))||1)),unit:String(fd.get('unit')||'Thimo365'),status:String(fd.get('status')||'Nieuwe aanvraag')};
+ demoClients[id]=c;K.chats[id]=[];
+ const saved={};for(const [key,value] of Object.entries(demoClients))if(key.startsWith('project-'))saved[key]=value;
+ localStorage.setItem('thimo-extra-clients',JSON.stringify(saved));
+ selectedClientId=id;localStorage.setItem('timo-selected-client',id);loadClientUnitSettings();role='client';page='AI-assistent';render();
+},true);
+const modernStyle=document.createElement('style');
+modernStyle.textContent=`
+:root{--green:#173f46;--lime:#d7f0e5;--paper:#f5f7fb;--line:#e2e8f0;--ink:#172f3a;--accent:#20a6a0}
+body{background:linear-gradient(135deg,#f6f8fc 0%,#f0f6f5 55%,#f8f4ef 100%);color:#172f3a}
+header{background:linear-gradient(110deg,#123b46,#176c70 70%,#268b85);border:0;box-shadow:0 10px 30px #123b4624}
+.logo span{color:#ffd18b}
+.logo:before{background:#ffd18b}
+.shell{background:transparent}
+nav{background:#fff;border-right:1px solid #e4eaf0;box-shadow:8px 0 28px #1c3d4b08}
+nav button.active{background:#e4f4f0;box-shadow:inset 4px 0 #1ba59b;color:#14565a}
+nav button:hover{background:#f0f8f7}
+main{max-width:1450px}
+h1{color:#153e49}
+h2,h3{color:#1c4850}
+.eyebrow{color:#168b85}
+.card{border:1px solid #e3eaf0;border-radius:15px;box-shadow:0 10px 32px #183b4a0c}
+button{background:linear-gradient(115deg,#167c80,#159b91);border-radius:8px;box-shadow:0 4px 12px #167c8020}
+button:hover{filter:brightness(1.06);transform:translateY(-1px)}
+button.alt{background:#fff;color:#176c70;border:1px solid #c9dfdc;box-shadow:none}
+input,select,textarea{border-radius:8px;border-color:#d4e0e5}
+input:focus,select:focus,textarea:focus{outline:3px solid #24aaa022;border-color:#20a6a0}
+.notice{background:#fff4df;color:#755322;border:1px solid #f4dfb4;border-radius:10px}
+.customer-grid,.project-tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px;margin:22px 0}
+.customer-card{margin:0;position:relative;overflow:hidden}
+.customer-card:before{content:"";position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,#1ba59b,#7fc7a6,#ffc27e)}
+.customer-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:17px}
+.customer-avatar{width:44px;height:44px;border-radius:14px;background:#e0f3ef;color:#147c78;display:grid;place-items:center;font-weight:800;font-size:20px}
+.customer-phase{font-size:11px;background:#fff1dc;color:#885b1f;border-radius:30px;padding:7px 10px}
+.customer-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0}
+.customer-stats>div{background:#f3f8f8;border-radius:9px;padding:11px}
+.customer-stats strong,.customer-stats small{display:block}
+.customer-stats strong{font-size:20px;color:#176c70}
+.customer-stats small{font-size:11px}
+.create-customer-card{border-top:5px solid #f2b76d}
+.create-customer-card h2{margin-top:8px}
+.project-tool-card{margin:0}
+.project-tool-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:#e2f3ef;color:#168b85;font-size:23px;font-weight:800;margin-bottom:16px}
+.project-tool-card:nth-child(2) .project-tool-icon{background:#fff1dc;color:#a66b22}
+.project-tool-card:nth-child(3) .project-tool-icon{background:#f2eafd;color:#7d58a8}
+.project-tool-card:nth-child(4) .project-tool-icon{background:#e8efff;color:#5276b8}
+.customer-concept-section{margin-top:30px}
+.concept-inline-heading{padding:25px 28px;margin:0 0 18px;border-radius:15px;background:linear-gradient(115deg,#173f46,#227d79);color:#fff}
+.concept-inline-heading span{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#bce7da;font-weight:800}
+.concept-inline-heading h2{color:#fff;font-size:28px;margin:9px 0}
+.concept-inline-heading p{color:#e1f2ed;margin:0}
+.concept-status{border-radius:12px}
+.concept-plan{border-radius:12px}
+.concept-map{border-radius:12px}
+.customer-chat-panel,.customer-unit-first,.logistics-section,.customer-proposal-section{border-radius:16px}
+.chatlog{scrollbar-color:#b7d8d0 transparent}
+.botbubble{background:#f0f8f6;border-color:#d9ebe7}
+.userbubble{background:#e2efff;color:#244c69}
+@media(max-width:760px){.customer-grid,.project-tool-grid{grid-template-columns:1fr}.customer-stats{gap:5px}.customer-stats>div{padding:8px}.concept-inline-heading{padding:20px}}
+`;
+document.head.appendChild(modernStyle);
+views.Klanten=customerOverview;
+views.Projectbeheer=staffProjectHub;
+views.Dashboard=compactStaffDashboard;
 render();
+
 </script></body></html>
