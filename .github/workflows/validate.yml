@@ -1,0 +1,27 @@
+name: Validate Thimo365 rebuild
+on:
+  push:
+    branches: ["rebuild/**"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check frontend JavaScript
+        run: node --check app.js
+      - name: Check Cloudflare Worker JavaScript
+        run: node --check ai-backend/worker.js
+      - name: Check required application files
+        run: |
+          test -s index.html
+          test -s styles.css
+          test -s app.js
+          test -s ai-backend/wrangler.toml
