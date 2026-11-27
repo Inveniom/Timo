@@ -55,8 +55,51 @@ function product(pid){return data.products.find(p=>p.id===pid)||data.products[0]
 function customer(){return data.customers.find(c=>c.id===customerId)||data.customers[0]}
 function log(action,entity,entityId,detail){data.audit.unshift({id:id(),action,entity,entityId,detail,at:now(),role});data.audit=data.audit.slice(0,200)}
 function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2600)}
-async function api(path,method="GET",body){const res=await fetch(API+path,{method,headers:{"Content-Type":"application/json",...(token?{"Authorization":"Bearer "+token}:{})},body:body?JSON.stringify(body):undefined});const json=await res.json().catch(()=>({error:"Ongeldige serverreactie"}));if(!res.ok)throw new Error(json.error||("HTTP "+res.status));return json}
-async function connect(){try{const a=await api("/api/auth","POST",{role,projectId,customerId,supplierId});token=a.token;const s=await api("/api/state");if(s&&s.data){data=s.data;connected=true;localDirty=false;$("#connection").textContent="Centrale opslag actief";$("#connection").classList.remove("offline");$("#storageStatus").textContent="Centrale projectdatabase";}else throw new Error("Geen projectgegevens");}catch(e){data=localLoad();connected=false;token="";$("#connection").textContent="Lokale demo-opslag";$("#connection").classList.add("offline");$("#storageStatus").textContent="Lokale demogegevens";}if(!data||!Array.isArray(data.projects))data=localLoad();normalizeData();if(role==="client"&&data.customers.length&&!data.customers.some(c=>c.id===customerId)){customerId=data.customers[0].id;projectId=data.projects[0]?.id||projectId;}if(role==="supplier"){const opts=data.supplierOptions||data.suppliers||[];if(opts.length&&!opts.some(x=>x.id===supplierId))supplierId=opts[0].id;const sw=$("#supplierSwitch"),sel=$("#supplierSelect");if(sw&&sel){sw.hidden=false;sel.innerHTML=opts.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");sel.value=supplierId}}else if($("#supplierSwitch"))$("#supplierSwitch").hidden=true;if(role==="supplier"&&!data.projects.some(p=>p.id===projectId)){projectId=data.projects[0]?.id||projectId;}try{render();startLiveSync()}catch(error){console.error("Thimo365 opstartfout:",error);const main=$("#main");if(main)main.innerHTML='<section class="card"><h1>Thimo365 kon niet volledig starten</h1><p>Er is een fout opgetreden bij het opbouwen van de projectomgeving.</p><pre class="notice error" style="white-space:pre-wrap;overflow-wrap:anywhere">' + esc(error?.stack||error?.message||String(error)) + '</pre><button class="button" type="button" onclick="location.reload()">Opnieuw laden</button></section>';}}
+async function api(path,method="GET",body){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),9000);try{const res=await fetch(API+path,{method,headers:{"Content-Type":"application/json",...(token?{"Authorization":"Bearer "+token}:{})},body:body?JSON.stringify(body):undefined,signal:controller.signal});const json=await res.json().catch(()=>({error:"Ongeldige serverreactie"}));if(!res.ok)throw new Error(json.error||("HTTP "+res.status));return json}catch(error){if(error?.name==="AbortError")throw new Error("De server reageert niet binnen 9 seconden");throw error}finally{clearTimeout(timer)}}
+async function connect(){
+ const main=$("#main");
+ try{
+  let remoteReady=false;
+  try{
+   const auth=await api("/api/auth","POST",{role,projectId,customerId,supplierId});
+   token=auth.token;
+   const state=await api("/api/state");
+   if(!state||!state.data)throw new Error("De centrale database gaf geen projectgegevens terug");
+   data=state.data;connected=true;localDirty=false;remoteReady=true;
+   $("#connection").textContent="Centrale opslag actief";$("#connection").classList.remove("offline");
+   $("#storageStatus").textContent="Centrale projectdatabase";
+  }catch(connectionError){
+   console.warn("Centrale verbinding niet beschikbaar; lokale demo wordt gestart:",connectionError);
+   data=localLoad();connected=false;token="";
+   $("#connection").textContent="Lokale demo-opslag";$("#connection").classList.add("offline");
+   $("#storageStatus").textContent="Lokale demogegevens";
+  }
+  if(!data||!Array.isArray(data.projects))data=localLoad();
+  normalizeData();
+  if(role==="client"&&data.customers.length&&!data.customers.some(c=>c.id===customerId)){customerId=data.customers[0].id;projectId=data.projects[0]?.id||projectId;}
+  if(role==="supplier"){
+   const opts=data.supplierOptions||data.suppliers||[];
+   if(opts.length&&!opts.some(x=>x.id===supplierId))supplierId=opts[0].id;
+   const sw=$("#supplierSwitch"),sel=$("#supplierSelect");
+   if(sw&&sel){sw.hidden=false;sel.innerHTML=opts.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");sel.value=supplierId;}
+  }else if($("#supplierSwitch"))$("#supplierSwitch").hidden=true;
+  if(role==="supplier"&&!data.projects.some(p=>p.id===projectId))projectId=data.projects[0]?.id||projectId;
+  render();
+  if(remoteReady)startLiveSync();
+ }catch(error){
+  console.error("Thimo365 opstartfout:",error);
+  try{
+   data=localLoad();connected=false;token="";normalizeData();
+   $("#connection").textContent="Lokale demo-opslag";$("#connection").classList.add("offline");
+   $("#storageStatus").textContent="Lokale demogegevens";
+   render();
+   toast("Thimo365 is gestart in demomodus; centrale verbinding of gegevens moeten worden gecontroleerd.");
+  }catch(fatal){
+   console.error("Thimo365 herstelstart mislukt:",fatal);
+   if(main)main.innerHTML='<section class="card"><h1>Thimo365 kon niet starten</h1><p>De applicatie is geladen, maar kon de projectomgeving niet opbouwen.</p><pre class="notice error" style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(fatal?.stack||fatal?.message||String(fatal))+'</pre><button class="button" type="button" onclick="location.reload()">Opnieuw laden</button></section>';
+  }
+ }
+}
 async function persist(collection,record){log("Bijgewerkt",collection,record.id,record.name||record.title||record.component||"");localSave();if(connected){pendingWrites++;try{await api("/api/record","POST",{collection,record});localDirty=false;return true}catch(e){toast("Niet centraal opgeslagen: "+e.message+" · Controleer verbinding en probeer opnieuw.");throw e}finally{pendingWrites=Math.max(0,pendingWrites-1)}}if(!connected){data.projectEvents=data.projectEvents||[];const pid=record.projectId||(collection==="projects"?record.id:null);if(pid&&collection!=="projectEvents")data.projectEvents.unshift({id:"local-"+id(),projectId:pid,type:collection,title:({tasks:"Taak bijgewerkt",questions:"Vraagstuk bijgewerkt",decisions:"Besluit bijgewerkt",documents:"Document geregistreerd",deliveries:"Levering bijgewerkt",changes:"Wijziging geregistreerd",projects:"Projectgegevens bijgewerkt"}[collection]||"Project bijgewerkt"),detail:record.title||record.name||record.status||"",actor:role,visibility:role==="client"?"internal":role==="supplier"?"supplier":"internal",createdAt:now()});localSave();return false}}
 function startLiveSync(){if(syncTimer)clearInterval(syncTimer);syncTimer=setInterval(async()=>{if(!connected||pendingWrites||localDirty||busy||["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName))return;try{const response=await api("/api/state");if(!response?.data)return;const snapshot=value=>{const copy={...value};delete copy.audit;return JSON.stringify(copy)};if(snapshot(response.data)!==snapshot(data)){data=response.data;localSave();localDirty=false;render();toast("Projectinformatie automatisch bijgewerkt vanuit de centrale projectdatabase")}}catch(e){const status=$("#connection");if(status&&status.textContent==="Centrale opslag actief")status.textContent="Centrale verbinding herstellen…"}},12000)}
 function pageHead(kicker,title,desc,extra){return '<div class="page-head"><div><div class="eyebrow">'+esc(kicker)+'</div><h1>'+esc(title)+'</h1><p>'+esc(desc||"")+'</p></div>'+(extra||"")+'</div>'}
