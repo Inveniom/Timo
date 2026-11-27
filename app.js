@@ -170,7 +170,7 @@ async function loadIfcViewer(file){
   scene.add(new THREE.GridHelper(100,100,0x9aaa9a,0xd4ddd1));
   v.scene=scene;v.camera=camera;v.renderer=renderer;v.controls=controls;v.meshes=[];v.selected=null;v.raycaster=new THREE.Raycaster();v.mouse=new THREE.Vector2();
   const api=new WebIFC.IfcAPI();api.SetWasmPath("https://cdn.jsdelivr.net/npm/web-ifc@0.0.71/");await api.Init(undefined,true);
-  const modelID=api.OpenModel(new Uint8Array(await file.arrayBuffer()),{COORDINATE_TO_ORIGIN:true});v.api=api;v.modelID=modelID;
+  let ifcBytes=new Uint8Array(await file.arrayBuffer());if(file.name.toLowerCase().endsWith(".ifczip")){if(!window.JSZip)throw Error("IFCZIP-reader niet geladen");const archive=await JSZip.loadAsync(ifcBytes);const entry=Object.values(archive.files).find(x=>!x.dir&&x.name.toLowerCase().endsWith(".ifc"));if(!entry)throw Error("Geen .ifc-bestand gevonden in IFCZIP");ifcBytes=new Uint8Array(await entry.async("arraybuffer"))}const modelID=api.OpenModel(ifcBytes,{COORDINATE_TO_ORIGIN:true});v.api=api;v.modelID=modelID;
   let elementCount=0,meshCount=0;
   const ids=api.GetAllLines(modelID);const allIds=typeof ids.size==="function"?Array.from({length:ids.size()},(_,i)=>ids.get(i)):Array.from(ids||[]);
   const productIds=allIds.filter(expressID=>{try{return api.IsIfcElement(api.GetLineType(modelID,expressID))}catch(e){return false}});
@@ -202,7 +202,7 @@ async function loadIfcViewer(file){
    const rect=renderer.domElement.getBoundingClientRect();v.mouse.x=((e.clientX-rect.left)/rect.width)*2-1;v.mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;v.raycaster.setFromCamera(v.mouse,camera);
    const hit=v.raycaster.intersectObjects(v.meshes,false)[0];if(!hit){updateIfcSelection(null);return}
    const meta=hit.object.userData;updateIfcSelection(meta);
-   v.meshes.forEach(m=>{m.material.emissive?.setHex(m===hit.object?0x557c38:0x000000);m.material.emissiveIntensity=m===hit.object?.35:0});
+   v.meshes.forEach(m=>{m.material.emissive?.setHex(m===hit.object?0x557c38:0x000000);m.material.emissiveIntensity=m===hit.object?0.35:0});
   });
   if(v.resize)window.removeEventListener("resize",v.resize);
   v.resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h)};
@@ -221,15 +221,15 @@ function renderBimIssueLinks(){
 async function createIssueFromSelection(){
  const s=ifcViewerState.selected;if(!s?.guid){toast("Selecteer eerst een IFC-object met GlobalId");return}
  const title=prompt("Onderwerp van het BCF-issue voor "+(s.name||s.type)+":","Modelopmerking: "+(s.name||s.type));if(!title?.trim())return;
- const record={id:id(),projectId:project().id,topicGuid:id(),title:title.trim(),status:"Open",priority:"Normal",assignedTo:"",type:"Issue",description:"Gekoppeld aan IFC-object "+s.guid+" ("+s.type+", Express ID "+s.expressID+").",components:[{ifcGuid:s.guid}],createdAt:now(),source:"Thimo365 3D-modelviewer"};
- await bimPersist("bimIssues",record);updateIfcSelection(s);renderBimIssueLinks();toast("BCF-issue gekoppeld aan IFC-object "+s.guid);render();
+ const linkedModel=(data.bimModels||[]).find(m=>m.projectId===project().id&&m.fileName===$("#ifcViewerFile")?.files?.[0]?.name);const record={id:id(),projectId:project().id,topicGuid:id(),title:title.trim(),status:"Open",priority:"Normal",assignedTo:"",type:"Issue",description:"Gekoppeld aan IFC-object "+s.guid+" ("+s.type+", Express ID "+s.expressID+").",components:[{ifcGuid:s.guid}],ifcModelId:linkedModel?.id||"",ifcRevision:linkedModel?.revision||"",createdAt:now(),source:"Thimo365 3D-modelviewer"};
+ await bimPersist("bimIssues",record);updateIfcSelection(s);renderBimIssueLinks();toast("BCF-issue gekoppeld aan IFC-object "+s.guid);
 }
 function openBimIssue(issueId){
  const issue=(data.bimIssues||[]).find(x=>x.id===issueId);if(!issue)return;
  const guid=issueGuids(issue)[0]||"";
  if(guid&&ifcViewerState.api&&ifcViewerState.modelID!==null){
   const expressID=ifcViewerState.api.GetExpressIdFromGuid(ifcViewerState.modelID,guid);
-  if(expressID){const mesh=ifcViewerState.meshes.find(m=>m.userData.expressID===Number(expressID));if(mesh){const s=mesh.userData;updateIfcSelection(s);const v=ifcViewerState;v.controls.target.copy(mesh.position);v.camera.position.set(mesh.position.x+8,mesh.position.y+6,mesh.position.z+8);v.controls.update();v.meshes.forEach(m=>{m.material.emissive?.setHex(m===mesh?0x557c38:0);m.material.emissiveIntensity=m===mesh?.35:0});$("#ifcCanvas")?.scrollIntoView({behavior:"smooth",block:"center"});return}}
+  if(expressID){const mesh=ifcViewerState.meshes.find(m=>m.userData.expressID===Number(expressID));if(mesh){const s=mesh.userData;updateIfcSelection(s);const v=ifcViewerState;v.controls.target.copy(mesh.position);v.camera.position.set(mesh.position.x+8,mesh.position.y+6,mesh.position.z+8);v.controls.update();v.meshes.forEach(m=>{m.material.emissive?.setHex(m===mesh?0x557c38:0);m.material.emissiveIntensity=m===mesh?0.35:0});$("#ifcCanvas")?.scrollIntoView({behavior:"smooth",block:"center"});return}}
  }
  toast(guid?"Issue gevonden; laad de bijbehorende IFC-revisie om het object te tonen.":"Dit BCF-issue heeft geen IFC GlobalId-koppeling.");
 }
