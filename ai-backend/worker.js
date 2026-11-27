@@ -36,7 +36,7 @@ export class ThimoDatabase{
    return send({data:d,role:s.role});
   }
   if(path==="/record"&&method==="POST"){
-   const b=await parse(req),c=b?.collection,r=b?.record;if(!collections.includes(c)||!r||typeof r.id!=="string")return send({error:"Ongeldige registratie"},400);
+   const b=await parse(req),c=b?.collection,r=b?.record;if(!collections.includes(c)||!r||typeof r.id!=="string")return send({error:"Ongeldige registratie"},400);const priorProject=c==="projects"?this.all("projects").find(x=>x.id===r.id):null;
    if(s.role==="client"){
     if(!["projects","questions"].includes(c))return send({error:"Geen rechten voor deze registratie"},403);
     if(c==="projects"&&r.id!==s.projectId)return send({error:"Project niet toegankelijk"},403);
@@ -50,7 +50,7 @@ export class ThimoDatabase{
    const projectId=r.projectId||(c==="projects"?r.id:null);
    let eventTitle="",eventDetail="",eventVisibility="internal";
    if(c==="projects"&&s.role==="client"){
-    const before=this.all("projects").find(x=>x.id===r.id)||{},changed=["unitCount","floorCount","moduleId","location","target","planning","layout"].filter(k=>JSON.stringify(before[k])!==JSON.stringify(r[k]));
+    const before=priorProject||{},changed=["unitCount","floorCount","moduleId","location","target","planning","layout"].filter(k=>JSON.stringify(before[k])!==JSON.stringify(r[k]));
     if(changed.length){eventTitle="Klant heeft projectgegevens gewijzigd";eventDetail="Ter beoordeling: "+changed.join(", ");const taskId="review-"+crypto.randomUUID();this.put("tasks",{id:taskId,projectId:r.id,title:"Beoordeel klantwijziging: "+changed.slice(0,3).join(", "),description:eventDetail,scope:eventDetail,phase:Number(r.phase)||0,status:"Nog niet gestart",priority:"Hoog",owner:"Projectregie",due:"",visibility:"internal",sourceEventId:taskId});}
    }else if(c==="questions"){eventTitle=s.role==="supplier"?"Leveranciersmelding ontvangen":"Vraagstuk bijgewerkt";eventDetail=safeText(r.title||r.body||"Projectvraag",500);eventVisibility=s.role==="supplier"?"supplier":"internal";}
    else if(c==="tasks"){eventTitle=s.role==="supplier"?"Leveranciersvoortgang bijgewerkt":"Projecttaak bijgewerkt";eventDetail=safeText(r.title||r.status||"Taak",500);eventVisibility=s.role==="supplier"?"supplier":"internal";}
