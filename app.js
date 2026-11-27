@@ -141,9 +141,31 @@ function bimPage(){
 }
 async function bimPersist(collection,record){data[collection]=data[collection]||[];data[collection].push(record);await persist(collection,record)}
 async function importIfc(){
- const f=$("#ifcFile")?.files?.[0];if(!f){toast("Selecteer eerst een IFC-bestand");return}
- if(f.size>80*1024*1024){toast("Bestand groter dan 80 MB; gebruik een afgeslankt uitwisselingsmodel");return}
- try{const raw=await f.text();if(!raw.includes("ISO-10303-21")&&!f.name.toLowerCase().endsWith(".ifczip"))throw Error("Geen herkenbaar IFC-SPF-bestand");const schema=(raw.match(/FILE_SCHEMA\s*\(\s*\('([^']+)/i)||[])[1]||"IFCZIP / niet uitgelezen");const counts={};for(const m of raw.matchAll(/#\d+\s*=\s*(IFC[A-Z0-9_]+)/g))counts[m[1]]=(counts[m[1]]||0)+1;const storeys=counts.IFCBUILDINGSTOREY||0;const projectName=(raw.match(/IFCPROJECT\s*\([^,]*,\s*'([^']*)'/i)||[])[1]||"";const rec={id:id(),projectId:project().id,fileName:f.name,fileSize:f.size,schema,revision:$("#ifcRevision").value||"Onbekend",modelRole:$("#ifcRole").value,author:$("#ifcAuthor").value,entityCount:Object.values(counts).reduce((a,b)=>a+b,0),entityCounts:counts,storeyCount:storeys,projectName,importedAt:now(),source:"IFC import · lokaal geanalyseerd",status:"Geïmporteerd"};await bimPersist("bimModels",rec);toast("IFC-model geïnventariseerd en geregistreerd");render()}catch(e){toast("IFC-import mislukt: "+e.message)}
+ const file=$("#ifcFile")?.files?.[0];
+ if(!file){toast("Selecteer eerst een IFC-bestand");return}
+ if(file.size>80*1024*1024){toast("Bestand groter dan 80 MB; gebruik een afgeslankt uitwisselingsmodel");return}
+ try{
+  let raw="";
+  if(file.name.toLowerCase().endsWith(".ifczip")){
+   if(!window.JSZip)throw Error("IFCZIP-reader niet geladen; vernieuw de pagina en probeer opnieuw");
+   const archive=await JSZip.loadAsync(file);
+   const entry=Object.values(archive.files).find(x=>!x.dir&&x.name.toLowerCase().endsWith(".ifc"));
+   if(!entry)throw Error("Geen .ifc-bestand gevonden in het IFCZIP-archief");
+   raw=await entry.async("text");
+  }else raw=await file.text();
+  if(!raw.includes("ISO-10303-21"))throw Error("Geen herkenbaar IFC-SPF-bestand");
+  const schemaMatch=raw.match(/FILE_SCHEMA\s*\(\s*\('([^']+)/i);
+  const schema=schemaMatch?.[1]||"Onbekend";
+  const counts={};
+  for(const match of raw.matchAll(/#\d+\s*=\s*(IFC[A-Z0-9_]+)/g))counts[match[1]]=(counts[match[1]]||0)+1;
+  const storeyCount=counts.IFCBUILDINGSTOREY||0;
+  const projectMatch=raw.match(/IFCPROJECT\s*\([^,]*,\s*'([^']*)'/i);
+  const projectName=projectMatch?.[1]||"";
+  const record={id:id(),projectId:project().id,fileName:file.name,fileSize:file.size,schema,revision:$("#ifcRevision").value||"Onbekend",modelRole:$("#ifcRole").value,author:$("#ifcAuthor").value,entityCount:Object.values(counts).reduce((sum,value)=>sum+value,0),entityCounts:counts,storeyCount,projectName,importedAt:now(),source:"IFC import · lokaal geanalyseerd",status:"Geïmporteerd"};
+  await bimPersist("bimModels",record);
+  toast("IFC-model geïnventariseerd en geregistreerd");
+  render();
+ }catch(error){toast("IFC-import mislukt: "+error.message)}
 }
 async function importIds(){
  const f=$("#idsFile")?.files?.[0];if(!f){toast("Selecteer eerst een IDS-bestand");return}
