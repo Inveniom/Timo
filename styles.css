@@ -416,3 +416,12 @@ footer{background:#214b3b;border-top:1px solid rgba(255,255,255,.12);padding:19p
 .supplier-welcome{background:radial-gradient(circle at 90% 10%,rgba(255,255,255,.2),transparent 28%),linear-gradient(115deg,#e8eee9,#f3f5ef 70%,#f6f0e5)}
 @media(max-width:850px){.topbar{grid-template-columns:auto 1fr;gap:12px}.topbar-context{display:none}.top-actions{justify-self:end}.workspace-welcome{grid-template-columns:1fr}.welcome-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px){.topbar{display:flex;align-items:center;flex-wrap:wrap}.top-actions{width:100%;justify-content:space-between}.sidebar{padding:8px 10px}.sidebar nav{gap:3px}.nav-button{padding:10px 12px}.app-shell main{padding:20px 13px 46px}.workspace-welcome{padding:22px 18px;border-radius:20px;gap:18px}.welcome-copy h2{font-size:26px}.welcome-stats>div{padding:12px 9px}.welcome-stats strong{font-size:24px}.card{padding:17px;border-radius:17px}}
+
+.project-activity{margin-top:22px;background:linear-gradient(145deg,#fff,#f8fbf7)}
+.activity-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px}
+.activity-head h2{margin:5px 0}
+.activity-item{display:flex;gap:13px;padding:13px 0;border-top:1px solid #e8eee8}
+.activity-dot{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#75a27b;margin:6px 0 0 2px;box-shadow:0 0 0 4px #e9f2e8}
+.activity-item strong{font-size:13px;color:#294c39}
+.activity-item p{margin:4px 0;color:#65776b;font-size:12px}
+.activity-item small{color:#87948b;font-size:10px}
