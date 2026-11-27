@@ -574,4 +574,51 @@ document.addEventListener("dragleave",e=>{const lane=e.target.closest("[data-kan
 document.addEventListener("drop",async e=>{const lane=e.target.closest("[data-kanban-drop]");if(!lane)return;e.preventDefault();lane.classList.remove("is-over");const taskId=e.dataTransfer?.getData("text/plain")||draggedTaskId,t=(data.tasks||[]).find(x=>x.id===taskId);if(!t)return;t.status=lane.dataset.kanbanDrop;try{await persist("tasks",t);render();toast("Taak verplaatst naar "+t.status)}catch(err){toast("Taakstatus kon niet worden opgeslagen")};draggedTaskId=null});
 document.addEventListener("input",e=>{if(e.target.id!=="boardSearch")return;const q=e.target.value.toLocaleLowerCase("nl");document.querySelectorAll("[data-kanban-task]").forEach(card=>card.hidden=!card.dataset.search.includes(q))});
 
+
+/* TERRAIN EDITOR V2 — measured, floor-aware, draggable concept layout */
+function terrainMetrics(p){
+ const dims={"m-265":[8,5.4],"m-365":[10.2,5.4],"m-465":[11,5.4]};
+ const d=dims[p.moduleId]||[10.2,5.4],m=product(p.moduleId)||{};
+ return {w:Number(m.lengthM)||d[0],h:Number(m.widthM)||d[1],area:(Number(m.lengthM)||d[0])*(Number(m.widthM)||d[1]),scale:12};
+}
+function layoutSvg(p,floor){
+ const total=Math.max(1,Math.min(200,Number(p.unitCount)||1)),floors=Math.max(1,Math.min(20,Number(p.floorCount)||1));
+ const assigned=Array.from({length:total},(_,i)=>i).filter(i=>i%floors===floor);
+ const saved=p.layout&&p.layout[floor]?p.layout[floor]:{},m=terrainMetrics(p),w=m.w*m.scale,h=m.h*m.scale;
+ const siteW=Math.max(20,Math.min(100,Number(p.siteWidthM)||55)),siteH=Math.max(15,Math.min(80,Number(p.siteDepthM)||28));
+ const xMax=Math.max(700,siteW*m.scale+40),yMax=Math.max(400,siteH*m.scale+60);
+ const x0=24,y0=54,pxW=siteW*m.scale,pxH=siteH*m.scale;
+ let svg='<svg class="terrain-svg" viewBox="0 0 '+xMax+' '+yMax+'" role="img" aria-label="Interactieve terreineditor, bouwlaag '+(floor+1)+'"><defs><pattern id="terrainGrid" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M12 0H0V12" fill="none" stroke="#dce6d8" stroke-width=".7"/></pattern><marker id="dimArrow" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto-start-reverse"><path d="M0 0L5 2.5L0 5" fill="#466b50"/></marker></defs><rect x="0" y="0" width="'+xMax+'" height="'+yMax+'" rx="12" fill="#f7faf5"/><text x="'+x0+'" y="24" class="terrain-svg-label">TERREIN · LAAG '+(floor+1)+'</text><text x="'+(x0+pxW)+'" y="24" text-anchor="end" class="terrain-svg-label">'+siteW.toFixed(1)+' × '+siteH.toFixed(1)+' m</text><rect x="'+x0+'" y="'+y0+'" width="'+pxW+'" height="'+pxH+'" rx="4" fill="#edf3e9" stroke="#779477" stroke-width="2"/><rect x="'+x0+'" y="'+y0+'" width="'+pxW+'" height="'+pxH+'" fill="url(#terrainGrid)"/>';
+ assigned.forEach((unit,j)=>{
+  const fallback={x:x0+18+(j%4)*(w+18),y:y0+34+Math.floor(j/4)*(h+22),r:0},pos=saved[unit]||fallback;
+  const x=Number(pos.x),y=Number(pos.y),r=((Number(pos.r)||0)%360+360)%360,rot=r%180!==0,dimW=rot?h:w,dimH=rot?w:h;
+  const selected=Number(p.selectedTerrainUnit)===unit;
+  svg+='<g class="site-unit '+(selected?'is-selected':'')+'" data-unit="'+unit+'" tabindex="0" role="button" aria-label="Unit '+(unit+1)+', '+m.w.toFixed(1)+' bij '+m.h.toFixed(1)+' meter" transform="translate('+x+' '+y+') rotate('+r+' '+(w/2)+' '+(h/2)+')"><rect x="0" y="0" width="'+w+'" height="'+h+'" rx="5" fill="'+(selected?'#426e4b':'#789575')+'" stroke="'+(selected?'#183d2b':'#345542')+'" stroke-width="'+(selected?3:1.6)+'"/><text x="'+(w/2)+'" y="'+(h*.43)+'" text-anchor="middle" fill="#fff" font-size="11" font-weight="800">UNIT '+(unit+1)+'</text><text x="'+(w/2)+'" y="'+(h*.72)+'" text-anchor="middle" fill="#f3f6ef" font-size="9">'+r+'°</text><path d="M0 -8V-15 M0 -15H'+w+' M'+w+' -8V-15" stroke="#42694a" stroke-width="1" fill="none"/><text x="'+(w/2)+'" y="-19" text-anchor="middle" font-size="9" fill="#31543b">'+(rot?m.h:m.w).toFixed(1)+' m</text><path d="'+(w+7)+' 0H'+(w+14)+' M'+(w+7)+' '+h+'H'+(w+14)+' M'+(w+11)+' 0V'+h+'" stroke="#42694a" stroke-width="1" fill="none"/><text x="'+(w+18)+'" y="'+(h/2)+'" font-size="9" fill="#31543b">'+(rot?m.w:m.h).toFixed(1)+' m</text></g>';
+ });
+ svg+='<line x1="'+x0+'" y1="'+(y0+pxH+22)+'" x2="'+(x0+pxW)+'" y2="'+(y0+pxH+22)+'" stroke="#466b50" marker-start="url(#dimArrow)" marker-end="url(#dimArrow)"/><text x="'+(x0+pxW/2)+'" y="'+(y0+pxH+38)+'" text-anchor="middle" font-size="10" fill="#466b50">'+siteW.toFixed(1)+' m terreinbreedte</text></svg>';
+ return svg;
+}
+const terrainBaseClientPage=clientPage;
+clientPage=function(){
+ const p=project();p.layout=p.layout||{};const floors=Math.max(1,Number(p.floorCount)||1),floor=Math.min(activeFloor,floors-1),m=terrainMetrics(p);
+ const count=Array.from({length:Math.max(0,Number(p.unitCount)||0)},(_,i)=>i).filter(i=>i%floors===floor).length;
+ const used=Object.values(p.layout[floor]||{}).filter(v=>v&&Number.isFinite(Number(v.x))&&Number.isFinite(Number(v.y))).length;
+ const editor='<div id="layoutPanel" class="terrain-editor"><div class="terrain-editor-head"><div><span class="eyebrow">CONCEPT & TERREININPASSING</span><h3>Ontwerp uw terrein</h3><p>Versleep modules, selecteer een unit en roteer in stappen van 90°. Maatvoering volgt de gekozen modulemaat.</p></div><div class="terrain-count"><strong>'+count+'</strong><small>units op deze laag</small></div></div><div class="terrain-tools"><label>Verdieping<select id="floorSelect">'+Array.from({length:floors},(_,i)=>'<option value="'+i+'" '+(i===floor?'selected':'')+'>Laag '+(i+1)+'</option>').join("")+'</select></label><label>Terreinbreedte (m)<input id="terrainWidth" type="number" min="10" max="100" step=".5" value="'+(Number(p.siteWidthM)||55)+'"></label><label>Terreindiepte (m)<input id="terrainDepth" type="number" min="10" max="80" step=".5" value="'+(Number(p.siteDepthM)||28)+'"></label><button class="button secondary" type="button" data-action="terrain-rotate">↻ 90° draaien</button><button class="button secondary" type="button" data-action="terrain-reset">Indeling herstellen</button></div><div class="terrain-canvas">'+layoutSvg(p,floor)+'</div><div class="terrain-readout"><div><small>MODULEMAAT</small><strong>'+m.w.toFixed(1)+' × '+m.h.toFixed(1)+' m</strong></div><div><small>FOOTPRINT PER UNIT</small><strong>'+m.area.toFixed(1)+' m²</strong></div><div><small>UNITS IN PROJECT</small><strong>'+esc(p.unitCount)+'</strong></div><div><small>VERDIEPINGEN</small><strong>'+floors+'</strong></div></div><p class="tiny">De verdeling over verdiepingen is automatisch en telt exact op tot '+esc(p.unitCount)+' units. Maten met een demo-productfiche zijn fictieve rekenmaten; laat perceel, brandroutes, afstanden, fundering en bouwkundige haalbaarheid door deskundigen toetsen.</p></div>';
+ let html=terrainBaseClientPage();
+ const start=html.indexOf('<div id="layoutPanel"');
+ if(start>=0){const end=html.indexOf('</section>',start);if(end>=0)html=html.slice(0,start)+editor+html.slice(end);}
+ else html+=editor;
+ return html;
+};
+document.addEventListener("click",async e=>{
+ const unit=e.target.closest("[data-unit]");
+ if(unit&&role==="client"){project().selectedTerrainUnit=Number(unit.dataset.unit);render();return}
+ const a=e.target.closest('[data-action="terrain-rotate"]');
+ if(a){const p=project(),n=Number(p.selectedTerrainUnit);if(!Number.isFinite(n)){toast("Selecteer eerst een unit");return}p.layout=p.layout||{};p.layout[activeFloor]=p.layout[activeFloor]||{};const old=p.layout[activeFloor][n]||{x:80,y:90,r:0};old.r=((Number(old.r)||0)+90)%360;p.layout[activeFloor][n]=old;await persist("projects",p);render();return}
+ if(e.target.closest('[data-action="terrain-reset"]')){const p=project();delete p.layout[activeFloor];await persist("projects",p);render();toast("Indeling van deze verdieping hersteld");}
+});
+document.addEventListener("change",async e=>{
+ if(e.target.id==="terrainWidth"||e.target.id==="terrainDepth"){const p=project(),v=Number(e.target.value);if(!Number.isFinite(v)||v<10){toast("Voer een terreinmaat van minimaal 10 meter in");return}p[e.target.id==="terrainWidth"?"siteWidthM":"siteDepthM"]=Math.min(e.target.id==="terrainWidth"?100:80,v);await persist("projects",p);render();}
+});
+
 connect();
