@@ -501,3 +501,25 @@ th{background:#f4f7f2}
 td,th{padding:13px 12px}
 @media(max-width:850px){.topbar-context{display:none}.sidebar{padding:9px 16px;overflow-x:auto}.sidebar nav{flex-wrap:nowrap}.nav-button{padding:9px 12px}.app-shell main{padding:25px 16px 60px}.brand small{display:none}.topbar{padding:12px 16px}.top-actions{gap:9px}.connection{display:none}.workspace-welcome{padding:24px}.workspace-welcome:after{opacity:.5}}
 @media(max-width:560px){.brand-word{font-size:22px}.brand-mark{width:34px;height:34px}.demo-label{display:none}.role-switch span{display:none}.role-switch select{max-width:125px}.page-head{align-items:flex-start;flex-direction:column}.card{padding:17px}.workspace-welcome h2{font-size:27px}.welcome-stats{gap:7px}.welcome-stats>div{padding:10px}.welcome-stats strong{font-size:23px}.field-grid{grid-template-columns:1fr}}
+
+
+/* Action-first project cockpit */
+.pulse-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:0 0 22px}
+.pulse-tile{position:relative;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:145px;padding:19px;border:1px solid #e4ebe2;border-radius:16px;background:linear-gradient(145deg,#fff,#f8faf6);color:#183d32;box-shadow:0 8px 22px rgba(27,54,42,.035);transition:transform .18s,box-shadow .18s,border-color .18s}
+.pulse-tile:hover{transform:translateY(-3px);border-color:#b9cdb6;box-shadow:0 14px 28px rgba(27,54,42,.08)}
+.pulse-tile>span{font-size:9px;font-weight:800;letter-spacing:1.35px;color:#718479}
+.pulse-tile>strong{font:800 31px Manrope,sans-serif;letter-spacing:-1.3px}
+.pulse-tile>small{font-size:11px;color:#78867d;line-height:1.4}
+.pulse-tile>i{font-style:normal;font-size:10px;font-weight:700;color:#54765d;margin-top:auto}
+.pulse-tile.pulse-attention{background:linear-gradient(145deg,#fff,#fbf7ed);border-color:#e9dfc8}
+.pulse-tile.pulse-attention>strong{color:#a16c34}
+.focus-card{padding:24px 28px}
+.focus-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.focus-heading h2{margin:5px 0 0}
+.focus-row{display:flex;align-items:center;gap:13px;padding:13px 0;border-top:1px solid #edf0eb}
+.focus-row>div{display:grid;gap:4px;flex:1;min-width:0}
+.focus-row strong{font-size:12px}
+.focus-row small{font-size:10px;color:#78867d}
+.focus-mark{width:9px;height:9px;border-radius:50%;background:#c08a4d;box-shadow:0 0 0 5px #f7f0e5}
+@media(max-width:900px){.pulse-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.pulse-grid{gap:8px}.pulse-tile{min-height:130px;padding:14px}.pulse-tile>strong{font-size:26px}.focus-heading{align-items:flex-start;flex-direction:column}.focus-row{align-items:flex-start;flex-wrap:wrap}}
