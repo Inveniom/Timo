@@ -169,7 +169,24 @@ async function importIfc(){
 }
 async function importIds(){
  const f=$("#idsFile")?.files?.[0];if(!f){toast("Selecteer eerst een IDS-bestand");return}
- try{const xml=new DOMParser().parseFromString(await f.text(),"application/xml");if(xml.querySelector("parsererror"))throw Error("IDS/XML bevat een syntaxfout");const nodes=[...xml.getElementsByTagNameNS("*","specification")];const specs=nodes.map(n=>({name:n.getAttribute("name")||"Naamloze specificatie",ifcEntities:[...n.getElementsByTagNameNS("*","simpleValue")].map(x=>x.textContent.trim()).filter(x=>/^IFC[A-Z0-9_]+$/i.test(x))}));if(!specs.length)throw Error("Geen IDS-specificaties gevonden");const rec={id:id(),projectId:project().id,fileName:f.name,name:xml.documentElement.getAttribute("name")||f.name,version:xml.documentElement.getAttribute("version")||"",specificationCount:specs.length,specifications:specs,modelId:$("#idsModel").value||"",importedAt:now(),status:"Geïmporteerd · basisprofiel"};await bimPersist("bimRequirements",rec);toast(specs.length+" IDS-specificaties ingelezen");render()}catch(e){toast("IDS-import mislukt: "+e.message)}
+ try{
+  const xml=new DOMParser().parseFromString(await f.text(),"application/xml");
+  if(xml.querySelector("parsererror"))throw Error("IDS/XML bevat een syntaxfout");
+  const children=(node,name)=>[...node.children].filter(x=>x.localName===name);
+  const simple=(node)=>children(node,"simpleValue")[0]?.textContent?.trim()||"";
+  const specs=[...xml.getElementsByTagNameNS("*","specification")].map(n=>{
+   const applicability=children(n,"applicability")[0];
+   const entityNames=applicability?children(applicability,"entity").map(entity=>simple(children(entity,"name")[0]||document.createElement("empty"))).filter(Boolean):[];
+   const requirements=children(n,"requirements")[0];
+   const facets=requirements?[...requirements.children].map(x=>({facet:x.localName,cardinality:x.getAttribute("cardinality")||"required"})):[];
+   return {name:n.getAttribute("name")||"Naamloze specificatie",ifcVersion:(n.getAttribute("ifcVersion")||"").split(/\\s+/).filter(Boolean),applicabilityEntities:entityNames,requirementFacets:facets};
+  });
+  if(!specs.length)throw Error("Geen IDS-specificaties gevonden");
+  const rec={id:id(),projectId:project().id,fileName:f.name,name:[...xml.getElementsByTagNameNS("*","title")][0]?.textContent?.trim()||f.name,version:xml.documentElement.getAttribute("version")||"",specificationCount:specs.length,specifications:specs,modelId:$("#idsModel").value||"",importedAt:now(),status:"Geïmporteerd · IDS-structuur gelezen"};
+  await bimPersist("bimRequirements",rec);
+  const facets=[...new Set(specs.flatMap(x=>x.requirementFacets.map(y=>y.facet)))];
+  toast(specs.length+" IDS-specificaties ingelezen ("+facets.length+" soorten requirement-facets)");render();
+ }catch(e){toast("IDS-import mislukt: "+e.message)}
 }
 async function runIds(){
  const spec=(data.bimRequirements||[]).filter(x=>x.projectId===project().id).slice(-1)[0],modelId=$("#idsModel")?.value||spec?.modelId,model=(data.bimModels||[]).find(x=>x.id===modelId);if(!spec||!model){toast("Importeer eerst een IDS-profiel en selecteer een IFC-model");return}
