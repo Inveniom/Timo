@@ -169,7 +169,7 @@ async function loadIfcViewer(file){
   const controls=new Orbit.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;
   scene.add(new THREE.GridHelper(100,100,0x9aaa9a,0xd4ddd1));
   v.scene=scene;v.camera=camera;v.renderer=renderer;v.controls=controls;v.meshes=[];v.selected=null;v.raycaster=new THREE.Raycaster();v.mouse=new THREE.Vector2();
-  const api=new WebIFC.IfcAPI();api.SetWasmPath("https://cdn.jsdelivr.net/npm/web-ifc@0.0.71/");await api.Init(undefined,true);
+  const api=new WebIFC.IfcAPI();api.SetWasmPath("https://cdn.jsdelivr.net/npm/web-ifc@0.0.71/",true);await api.Init(undefined,true);
   let ifcBytes=new Uint8Array(await file.arrayBuffer());if(file.name.toLowerCase().endsWith(".ifczip")){if(!window.JSZip)throw Error("IFCZIP-reader niet geladen");const archive=await JSZip.loadAsync(ifcBytes);const entry=Object.values(archive.files).find(x=>!x.dir&&x.name.toLowerCase().endsWith(".ifc"));if(!entry)throw Error("Geen .ifc-bestand gevonden in IFCZIP");ifcBytes=new Uint8Array(await entry.async("arraybuffer"))}const modelID=api.OpenModel(ifcBytes,{COORDINATE_TO_ORIGIN:true});v.api=api;v.modelID=modelID;
   let elementCount=0,meshCount=0;
   const ids=api.GetAllLines(modelID);const allIds=typeof ids.size==="function"?Array.from({length:ids.size()},(_,i)=>ids.get(i)):Array.from(ids||[]);
@@ -185,13 +185,13 @@ async function loadIfcViewer(file){
    for(let i=0;i<n;i++){
     const placed=flat.geometries.get(i),geom=api.GetGeometry(modelID,placed.geometryExpressID);
     const pos=api.GetVertexArray(geom.GetVertexData(),geom.GetVertexDataSize());
-    const idx=api.GetIndexArray(geom.GetIndexData(),geom.GetIndexDataSize());
+    const idx=new Uint32Array(api.GetIndexArray(geom.GetIndexData(),geom.GetIndexDataSize()));
     const buffer=new THREE.BufferGeometry(),positions=new Float32Array(pos.length/6*3),normals=new Float32Array(pos.length/6*3);
     for(let j=0,k=0;j<pos.length;j+=6,k+=3){positions[k]=pos[j];positions[k+1]=pos[j+1];positions[k+2]=pos[j+2];normals[k]=pos[j+3];normals[k+1]=pos[j+4];normals[k+2]=pos[j+5]}
     buffer.setAttribute("position",new THREE.BufferAttribute(positions,3));buffer.setAttribute("normal",new THREE.BufferAttribute(normals,3));buffer.setIndex(new THREE.BufferAttribute(idx,1));
     const col=placed.color||{x:.78,y:.82,z:.76,w:1};
     const material=new THREE.MeshStandardMaterial({color:new THREE.Color(col.x??col.r??.78,col.y??col.g??.82,col.z??col.b??.76),roughness:.82,metalness:.02,transparent:(col.w??1)<.98,opacity:col.w??1,side:THREE.DoubleSide});
-    const mesh=new THREE.Mesh(buffer,material);mesh.applyMatrix4(new THREE.Matrix4().fromArray(placed.flatTransformation));mesh.userData={expressID:flat.expressID,guid,type,name};scene.add(mesh);v.meshes.push(mesh);meshCount++;
+    const mesh=new THREE.Mesh(buffer,material);mesh.applyMatrix4(new THREE.Matrix4().fromArray(placed.flatTransformation));mesh.userData={expressID:flat.expressID,guid,type,name};scene.add(mesh);v.meshes.push(mesh);meshCount++;geom.delete();
    }
    elementCount++;
   });
