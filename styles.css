@@ -779,3 +779,25 @@ td,th{padding:13px 12px}
 @media(max-width:560px){.visual-journey-top,.supplier-progress-head{align-items:flex-start}.journey-ring{width:70px;height:70px;flex-basis:70px}.visual-phase-track{grid-template-columns:repeat(2,minmax(0,1fr))}.journey-shortcuts{grid-template-columns:1fr}.visual-journey,.supplier-progress-panel{padding:16px}}
 
 .kanban-board{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:850px){.kanban-board{grid-template-columns:1fr}}
+
+
+/* Measured interactive terrain editor */
+.terrain-editor{margin:18px 0;padding:clamp(16px,2.2vw,26px);border:1px solid #dfe9dc;border-radius:20px;background:linear-gradient(145deg,#fff,#f4f8f1);box-shadow:0 12px 30px rgba(34,70,43,.07)}
+.terrain-editor-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:16px}
+.terrain-editor-head h3{margin:5px 0;color:#244936;font:750 22px Manrope}
+.terrain-editor-head p{margin:0;color:#718174;font-size:11px;line-height:1.55}
+.terrain-count{display:grid;justify-items:center;min-width:76px;padding:10px 14px;border-radius:13px;background:#e8f1e4;color:#315d3d}
+.terrain-count strong{font:800 25px Manrope}.terrain-count small{font-size:8px}
+.terrain-tools{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:15px 0}
+.terrain-tools label{display:grid;gap:5px;color:#718174;font-size:9px;font-weight:800}
+.terrain-tools select,.terrain-tools input{width:125px;min-height:38px;padding:8px 10px;border:1px solid #dce6d8;border-radius:9px;background:#fff;color:#294a36;font-size:11px}
+.terrain-tools .button{min-height:38px}
+.terrain-canvas{overflow:auto;border:1px solid #e0e9dd;border-radius:14px;background:#f7faf5;touch-action:pan-x pan-y}
+.terrain-svg{display:block;width:100%;min-width:620px;height:auto;max-height:680px;user-select:none}
+.terrain-svg-label{font:800 11px Manrope;letter-spacing:1px;fill:#58705a}
+.site-unit{cursor:grab;outline:none;touch-action:none}.site-unit:active{cursor:grabbing}.site-unit.is-selected rect{filter:drop-shadow(0 3px 4px #24493655)}
+.terrain-readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:14px 0}
+.terrain-readout>div{display:grid;gap:5px;padding:11px;border:1px solid #e4ece1;border-radius:10px;background:#fff}
+.terrain-readout small{font-size:8px;letter-spacing:.8px;font-weight:800;color:#849185}
+.terrain-readout strong{font-size:12px;color:#31543b}
+@media(max-width:650px){.terrain-editor-head{flex-direction:column}.terrain-tools label{flex:1 1 42%}.terrain-tools select,.terrain-tools input{width:100%}.terrain-readout{grid-template-columns:repeat(2,minmax(0,1fr))}}
