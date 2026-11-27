@@ -5,3 +5,9 @@
 @media(max-width:700px){.topbar{align-items:flex-start;flex-direction:column;padding:15px 18px}.top-actions{width:100%;justify-content:space-between}.brand{font-size:27px}.app-shell{display:block}.sidebar{padding:9px 12px;border-right:0;border-bottom:1px solid var(--line)}.sidebar-heading,.sidebar-foot{display:none}.sidebar nav{display:flex;overflow:auto;gap:5px}.nav-button{white-space:nowrap;padding:9px 12px}.app-shell main{padding:24px 15px 48px}.page-head{display:block}.page-head .actions{margin-top:14px}.grid{gap:10px}.span-8,.span-7,.span-6,.span-5,.span-4{grid-column:span 12}.card{padding:17px}.field-grid{grid-template-columns:1fr}.unit-grid{grid-template-columns:1fr}.phase-track{grid-template-columns:repeat(3,minmax(0,1fr))}.chat-compose{grid-template-columns:1fr}.logistics-route{grid-template-columns:1fr}.logistics-route .arrow{transform:rotate(90deg)}footer{flex-wrap:wrap}footer span:nth-child(2){display:none}}
 
 .workflow-phase{scroll-margin-top:24px}.workflow-phase .field-grid{align-items:start}.workflow-phase textarea{min-height:112px;line-height:1.5}.workflow-phase .notice{margin-top:20px}.workflow-phase .eyebrow{margin-bottom:8px}.workflow-phase h2{margin-bottom:8px}
+
+.master-record{padding:18px 0;border-top:1px solid var(--line,#e5e9e4)}
+.master-record:first-of-type{border-top:0}
+.master-record-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+.master-record .field textarea{min-height:84px}
+.master-record .field-grid{margin-bottom:12px}
