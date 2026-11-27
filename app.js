@@ -189,8 +189,12 @@ async function importIds(){
  }catch(e){toast("IDS-import mislukt: "+e.message)}
 }
 async function runIds(){
- const spec=(data.bimRequirements||[]).filter(x=>x.projectId===project().id).slice(-1)[0],modelId=$("#idsModel")?.value||spec?.modelId,model=(data.bimModels||[]).find(x=>x.id===modelId);if(!spec||!model){toast("Importeer eerst een IDS-profiel en selecteer een IFC-model");return}
- const expected=[...new Set((spec.specifications||[]).flatMap(x=>x.ifcEntities||[]))],actual=model.entityCounts||{},missing=expected.filter(x=>!(actual[x]||actual[x.toUpperCase()]));const checked=expected.reduce((n,x)=>n+(actual[x]||actual[x.toUpperCase()]||0),0);const rec={id:id(),projectId:project().id,profileId:spec.id,profileName:spec.name,modelId:model.id,modelName:model.fileName,checked,failed:missing.length,missingEntities:missing,createdAt:now(),scope:"Alleen IDS entity-facet basiscontrole; overige facets niet beoordeeld",status:missing.length?"Afwijkingen":"Basiscontrole"};await bimPersist("bimChecks",rec);toast("IDS-basiscontrole afgerond: "+missing.length+" ontbrekende entiteittypen");render()
+ const spec=(data.bimRequirements||[]).filter(x=>x.projectId===project().id).slice(-1)[0],modelId=$("#idsModel")?.value||spec?.modelId,model=(data.bimModels||[]).find(x=>x.id===modelId);
+ if(!spec||!model){toast("Importeer eerst een IDS-profiel en selecteer een IFC-model");return}
+ const expected=[...new Set((spec.specifications||[]).flatMap(x=>x.applicabilityEntities||[]))],actual=model.entityCounts||{},present=expected.filter(x=>(actual[x]||actual[x.toUpperCase()]||0)>0),missing=expected.filter(x=>!(actual[x]||actual[x.toUpperCase()]||0));
+ const rec={id:id(),projectId:project().id,profileId:spec.id,profileName:spec.name,modelId:model.id,modelName:model.fileName,checked:expected.length,passed:present.length,failed:missing.length,applicabilityEntities:expected,presentEntities:present,missingEntities:missing,requirementFacets:spec.specifications.flatMap(x=>x.requirementFacets||[]),createdAt:now(),scope:"Voorcontrole van IDS-applicability entiteittypen. Attributen, properties, materialen, classificaties, cardinaliteit en overige IDS-facets zijn niet gevalideerd.",status:missing.length?"Entiteittypen ontbreken":"Entiteittypen aanwezig · geen volledige IDS-validatie"};
+ await bimPersist("bimChecks",rec);
+ toast("IDS-entiteitsvoorcontrole: "+present.length+"/"+expected.length+" entiteittypen aangetroffen; requirements nog niet gevalideerd");render()
 }
 async function importBcf(){
  const f=$("#bcfFile")?.files?.[0];if(!f){toast("Selecteer eerst een BCF-bestand");return}
