@@ -546,7 +546,7 @@ clientPage=function(){
 const priorStaffDashboard=staffDashboard;
 staffDashboard=function(){
  const base=priorStaffDashboard(),today=new Date().toISOString().slice(0,10),items=(data.tasks||[]).filter(t=>!["Afgerond","Geannuleerd","Systeem"].includes(t.status)&&!String(t.id).startsWith("phase-template-")).slice(0,36);
- const lanes=[["Nog niet gestart","Te starten"],["In behandeling","In uitvoering"],["Ter beoordeling","Ter beoordeling"]];
+ const lanes=[["Nog niet gestart","Te starten"],["In behandeling","In uitvoering"],["Geblokkeerd","Geblokkeerd"],["Ter beoordeling","Ter beoordeling"]];
  const laneHtml=lanes.map(pair=>{
   const status=pair[0],label=pair[1],tasks=items.filter(t=>(t.status||"Nog niet gestart")===status);
   const cards=tasks.map(t=>{
