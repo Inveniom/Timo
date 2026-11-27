@@ -340,3 +340,79 @@ footer .footer-brand strong{color:#fff}
 #planProjectFilter{min-width:220px}
 #planPhaseFilter{max-width:250px}
 @media(max-width:760px){.portfolio-phase-row{grid-template-columns:1fr;gap:8px}.phase-project-meta{text-align:left}.dependency-field{grid-column:span 1}}
+
+
+/* ── THIMO365 2027 · warm, human, task-first workspace redesign ── */
+:root{--forest:#214c3d;--forest-2:#326b54;--sage:#e6eee5;--sage-2:#f2f6f1;--paper:#f7f8f5;--ink:#1c3028;--muted:#75847b;--line:#e4eae4;--gold:#d5a95e;--red:#b65d52;--shadow:0 12px 38px rgba(34,65,48,.065);--shadow-hover:0 18px 48px rgba(34,65,48,.12);--radius:22px;--radius-sm:15px}
+body{background:linear-gradient(135deg,#f7f8f5 0%,#f2f6f1 48%,#faf8f2 100%);color:var(--ink);font-size:14px;letter-spacing:0}
+.topbar{min-height:76px;padding:12px clamp(18px,4vw,58px);background:rgba(255,255,255,.88);border-bottom:1px solid #e8eee8;box-shadow:0 4px 20px rgba(30,60,42,.025)}
+.brand-mark{border-radius:15px;background:linear-gradient(145deg,#3d795e,#1b4434);box-shadow:0 7px 18px rgba(33,76,61,.2)}
+.brand-word{font-size:23px;letter-spacing:-1.3px}
+.topbar-context strong{font-size:13px}
+.role-switch select{border-radius:13px;background:#f6f9f5;border-color:#e1e9e1}
+.demo-label{border-radius:999px;background:#fff9ed;border-color:#f0e5cb;color:#8b7447}
+.app-shell{display:flex;flex-direction:column;max-width:1760px;min-height:calc(100vh - 150px)}
+.sidebar{position:relative;top:auto;height:auto;overflow:visible;background:rgba(255,255,255,.68);border-right:0;border-bottom:1px solid #e6ece6;padding:10px clamp(16px,4vw,58px);display:block}
+.sidebar-heading,.sidebar-foot{display:none}
+.sidebar nav{display:flex;align-items:center;gap:6px;max-width:1640px;margin:auto;overflow-x:auto;scrollbar-width:thin}
+.nav-button{white-space:nowrap;border-radius:12px;padding:11px 14px;font-size:12px}
+.nav-button:before{display:none}
+.nav-button.active{background:#e8f1e8;color:#244e3d;box-shadow:inset 0 0 0 1px #dce9dc}
+.nav-button:hover{transform:translateY(-1px);background:#eff5ef}
+.app-shell main{max-width:1540px;padding:30px clamp(16px,4vw,58px) 76px}
+.page-head{align-items:center;margin-bottom:22px}
+.page-head h1{font-size:clamp(28px,3vw,40px);letter-spacing:-1.6px}
+.page-head p{font-size:13px;max-width:760px}
+.card{border:1px solid rgba(222,232,223,.92);border-radius:20px;padding:24px;box-shadow:0 8px 26px rgba(30,58,40,.045);transition:box-shadow .2s,border-color .2s}
+.card:hover{border-color:#d6e4d7;box-shadow:var(--shadow)}
+.card h2{font-size:19px;letter-spacing:-.55px}
+.button{border-radius:12px;padding:11px 17px;background:#285640;border-color:#285640;box-shadow:0 3px 8px rgba(33,76,61,.12);transition:transform .16s,box-shadow .16s,background .16s}
+.button:hover{background:#397456;transform:translateY(-1px);box-shadow:0 7px 16px rgba(33,76,61,.15)}
+.button.secondary{background:#fff;color:#2d5a43;border-color:#dce7dc;box-shadow:none}
+.button.ghost{box-shadow:none}
+.field input,.field select,.field textarea,.search-input,.chat-compose textarea{border-radius:11px;border-color:#dce6dc;background:#fff;padding:12px 13px;transition:border-color .15s,box-shadow .15s}
+.field input:focus,.field select:focus,.field textarea:focus,.search-input:focus,.chat-compose textarea:focus{outline:none;border-color:#78a487;box-shadow:0 0 0 3px rgba(91,145,105,.13)}
+.unit-card{border-radius:15px;padding:17px;background:linear-gradient(150deg,#fff,#fbfdfb);transition:transform .16s,border-color .16s,box-shadow .16s}
+.unit-card:hover{transform:translateY(-2px);box-shadow:0 9px 22px rgba(33,76,61,.08)}
+.unit-card.selected{border:2px solid #6f9b79;background:#f0f7ef}
+.pill{border-radius:999px;padding:6px 10px}
+.phase{border-radius:11px;padding:12px 10px}
+.phase.current{background:#eaf3e9;border-color:#9cbaa0}
+.chat-list{border:1px solid #e5ece5;border-radius:15px;background:#f7faf6;padding:15px}
+.bubble{border-radius:15px;padding:13px 15px}
+.bubble.user{background:#e7f2e7;border-color:#d5e6d6}
+.proposal{border:1px solid #d5e5d6;background:linear-gradient(145deg,#fbfdf9,#f2f7ef)}
+.proposal-edit{border-radius:12px}
+.logistics-route{border-radius:15px;background:#f0f6ef;padding:20px}
+.notice{border-radius:12px;border-left-width:4px}
+.empty{border-radius:14px}
+.toast{border-radius:13px}
+footer{background:#214b3b;border-top:1px solid rgba(255,255,255,.12);padding:19px clamp(18px,4vw,58px)}
+.workspace-welcome{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,.75fr);gap:26px;align-items:stretch;padding:clamp(24px,3vw,38px);margin:0 0 25px;border:1px solid #dfe9df;border-radius:26px;background:radial-gradient(circle at 88% 8%,rgba(255,255,255,.75),transparent 30%),linear-gradient(115deg,#eaf2e8,#f5f7f1 72%,#f7f4e9);box-shadow:0 14px 36px rgba(35,68,47,.055);overflow:hidden}
+.welcome-copy{display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+.welcome-kicker{font-size:9px;font-weight:800;letter-spacing:1.55px;color:#6b8870}
+.welcome-copy h2{font:750 clamp(24px,3vw,36px)/1.14 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-1.4px;color:#244b39;margin:11px 0}
+.welcome-copy h2 em{font-style:normal;color:#66876b}
+.welcome-copy p{max-width:660px;color:#68796e;font-size:13px;line-height:1.7;margin:0}
+.welcome-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:22px}
+.welcome-primary{border:0;border-radius:13px;padding:12px 16px;background:#285640;color:white;font-size:12px;font-weight:700;box-shadow:0 5px 13px rgba(33,76,61,.14)}
+.welcome-primary span{margin-left:15px;font-size:17px;vertical-align:-1px}
+.welcome-primary:hover{background:#397456;transform:translateY(-1px)}
+.welcome-link{border:0;background:transparent;color:#476a50;font-size:12px;font-weight:700;padding:10px 0}
+.welcome-side{display:grid;gap:12px;align-content:center}
+.welcome-progress,.next-action{padding:17px 18px;border:1px solid rgba(216,229,216,.9);border-radius:17px;background:rgba(255,255,255,.72)}
+.welcome-progress>div:first-child{display:flex;align-items:center;justify-content:space-between}
+.welcome-progress span,.next-action>span,.welcome-stats span{font-size:9px;letter-spacing:1.1px;font-weight:800;color:#829187}
+.welcome-progress strong{font:750 24px -apple-system,BlinkMacSystemFont,sans-serif;color:#315b43}
+.progress-track{height:7px;background:#e8eee7;border-radius:99px;overflow:hidden;margin:12px 0 9px}
+.progress-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#77a77b,#3e7956)}
+.welcome-progress small,.next-action small{display:block;color:#849087;font-size:10px;line-height:1.5;margin-top:6px}
+.next-action strong{display:block;color:#31563e;font-size:14px;margin-top:7px}
+.welcome-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;align-content:center}
+.welcome-stats>div{padding:16px 13px;border:1px solid rgba(216,229,216,.9);border-radius:16px;background:rgba(255,255,255,.75);min-width:0}
+.welcome-stats strong{display:block;font:750 29px -apple-system,BlinkMacSystemFont,sans-serif;color:#315b43;margin-top:10px}
+.welcome-stats .is-alert strong{color:#b65d52}
+.staff-welcome{background:radial-gradient(circle at 88% 10%,rgba(255,255,255,.16),transparent 28%),linear-gradient(115deg,#e3eee4,#edf3ed 62%,#f7f2e7)}
+.supplier-welcome{background:radial-gradient(circle at 90% 10%,rgba(255,255,255,.2),transparent 28%),linear-gradient(115deg,#e8eee9,#f3f5ef 70%,#f6f0e5)}
+@media(max-width:850px){.topbar{grid-template-columns:auto 1fr;gap:12px}.topbar-context{display:none}.top-actions{justify-self:end}.workspace-welcome{grid-template-columns:1fr}.welcome-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.topbar{display:flex;align-items:center;flex-wrap:wrap}.top-actions{width:100%;justify-content:space-between}.sidebar{padding:8px 10px}.sidebar nav{gap:3px}.nav-button{padding:10px 12px}.app-shell main{padding:20px 13px 46px}.workspace-welcome{padding:22px 18px;border-radius:20px;gap:18px}.welcome-copy h2{font-size:26px}.welcome-stats>div{padding:12px 9px}.welcome-stats strong{font-size:24px}.card{padding:17px;border-radius:17px}}
