@@ -1,7 +1,7 @@
 name: Validate Thimo365 rebuild
 on:
   push:
-    branches: ["rebuild/**"]
+    branches: ["main", "rebuild/**"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
