@@ -42,7 +42,7 @@ jobs:
           STAFF_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$STAFF_AUTH")
           STAFF_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $STAFF_TOKEN" http://127.0.0.1:8787/api/state)
           node -e 'const s=JSON.parse(process.argv[1]);if(!s.data.costs.some(x=>"cost" in x)||s.data.projects.length!==3)process.exit(1)' "$STAFF_STATE"
-          STAFF_PROJECT=$(node -e 'const s=JSON.parse(process.argv[1]);console.log(JSON.stringify(s.data.projects[0]))' "$STAFF_STATE")
+          STAFF_PROJECT=$(node -e 'const s=JSON.parse(process.argv[1]);console.log(JSON.stringify(s.data.projects.find(p=>p.id==="p-parkzicht")) )' "$STAFF_STATE")
           node -e 'const p=JSON.parse(process.argv[1]);p.workflow={commercialTerms:"INTERNAL TEST ONLY"};console.log(JSON.stringify(p))' "$STAFF_PROJECT" > /tmp/thimo-project.json
           curl -fsS -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $STAFF_TOKEN" --data-binary "{\"collection\":\"projects\",\"record\":$(cat /tmp/thimo-project.json)}" http://127.0.0.1:8787/api/record > /dev/null
           CLIENT_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $CLIENT_TOKEN" http://127.0.0.1:8787/api/state)
