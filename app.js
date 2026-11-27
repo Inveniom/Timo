@@ -534,4 +534,35 @@ suppliersPage=function(){const ss=data.suppliers||[];return pageHead("Ketenregie
 const baseAction=action;
 action=async function(a){if(a==="client-submit-question"){const title=$("#clientQuestionTitle")?.value.trim()||"",body=$("#clientQuestionBody")?.value.trim()||"";if(!title||!body){toast("Vul onderwerp en vraag in");return}const q={id:id(),projectId:project().id,title,body,phase:project().phase,status:"Open",owner:"Thimo-regiehouder",blocking:false,source:"client",visibility:"customer",createdAt:now()};data.questions=data.questions||[];data.questions.push(q);await persist("questions",q);page="Mijn vraagstukken";render();toast("Uw vraag is aan het projectteam verstuurd");return}return baseAction(a)};
 
+
+/* INTERACTIVE WORKSPACES · visual progress, live filters and drag-and-drop workboard */
+const priorClientPage=clientPage;
+clientPage=function(){
+ const p=project(),phase=Math.max(0,Math.min(5,Number(p.phase)||0)),steps=["Intake","Ontwerp","Afspraken","Techniek","Vrijgave","Realisatie"];
+ const progress=Math.round((phase/6)*100);
+ const ribbon='<section class="visual-journey"><div class="visual-journey-top"><div><span class="eyebrow">PROJECTREIS</span><h2>Van eerste vraag tot realisatie</h2><p>Volg de voortgang en open de onderdelen waar uw aandacht nodig is.</p></div><div class="journey-ring" style="--progress:'+progress+'%"><strong>'+progress+'%</strong><small>doorlopen</small></div></div><div class="visual-phase-track">'+steps.map((s,i)=>'<button class="visual-phase '+(i<phase?"is-done":i===phase?"is-current":"")+'" data-action="'+(i===0?"go:Mijn project":i===1?"go:Mijn project":i===2?"go:Documenten & besluiten":i===3?"go:Documenten & besluiten":i===4?"go:Documenten & besluiten":"go:Documenten & besluiten")+'"><span class="phase-node">'+(i<phase?"✓":"0"+(i+1))+'</span><b>'+s+'</b><small>'+(i<phase?"Afgerond":i===phase?"Actuele fase":"Nog te doen")+'</small></button>').join("")+'</div><div class="journey-shortcuts"><button data-page="Mijn vraagstukken"><span>✉</span><b>Vraag stellen</b><small>Bespreek een keuze of wijziging</small></button><button data-page="Documenten & besluiten"><span>▤</span><b>Projectdocumenten</b><small>Bekijk vrijgegeven informatie</small></button></div></section>';
+ return ribbon+priorClientPage();
+};
+const priorStaffDashboard=staffDashboard;
+staffDashboard=function(){
+ const base=priorStaffDashboard(),today=new Date().toISOString().slice(0,10),items=(data.tasks||[]).filter(t=>!["Afgerond","Geannuleerd","Systeem"].includes(t.status)&&!String(t.id).startsWith("phase-template-")).slice(0,36);
+ const lanes=[["Nog niet gestart","Te starten"],["In behandeling","In uitvoering"],["Ter beoordeling","Ter beoordeling"]];
+ const board='<section class="card visual-board-card"><div class="visual-board-head"><div><span class="eyebrow">LIVE WERKVOORRAAD</span><h2>Projectwerk in beweging</h2><p>Sleep een taak naar een andere kolom om de status bij te werken. De wijziging wordt opgeslagen in het project.</p></div><label class="board-search"><icon></icon><input id="boardSearch" placeholder="Zoek taak of project…"></label></div><div class="kanban-board">'+lanes.map(([status,label])=>{const ts=items.filter(t=>(t.status||"Nog niet gestart")===status);return '<div class="kanban-lane" data-kanban-lane="'+status+'"><div class="kanban-lane-head"><strong>'+label+'</strong><span>'+ts.length+'</span></div><div class="kanban-dropzone" data-kanban-drop="'+status+'">'+ts.map(t=>'<article class="kanban-task" draggable="true" data-kanban-task="'+esc(t.id)+'" data-search="'+esc((t.title+" "+projectName(t.projectId)).toLowerCase())+'"><span class="kanban-task-phase">'+esc(phases[t.phase]||"Project")+'</span><strong>'+esc(t.title)+'</strong><small>'+esc(projectName(t.projectId))+'</small><div class="kanban-task-foot"><span>'+esc(t.owner||"Eigenaar ontbreekt")+'</span><span class="'+(t.due&&t.due<today?"late":"")+'">'+esc(t.due||"Geen deadline")+'</span></div><select aria-label="Taakstatus" data-task="'+esc(t.id)+'">'+["Nog niet gestart","In behandeling","Geblokkeerd","Ter beoordeling","Afgerond"].map(v=>'<option '+((t.status||"Nog niet gestart")===v?"selected":"")+'>'+v+'</option>').join("")+'</select></article>').join("")||'<div class="kanban-empty">Geen taken in deze kolom</div>'}</div></div>'}).join("")+'</div><p class="tiny muted">Geblokkeerde taken en afgeronde taken blijven zichtbaar in de centrale planning.</p></section>';
+ return base+board;
+};
+const priorSupplierHome=supplierHome;
+supplierHome=function(){
+ const base=priorSupplierHome(),mine=(data.tasks||[]).filter(t=>t.supplierId===supplierId),statuses=["Nog niet gestart","In behandeling","Geblokkeerd","Ter beoordeling","Afgerond"],counts=statuses.map(s=>mine.filter(t=>t.status===s).length),total=Math.max(1,mine.length);
+ const progress='<section class="supplier-progress-panel"><div class="supplier-progress-head"><div><span class="eyebrow">UW PRESTATIES</span><h2>Opdrachtvoortgang</h2><p>Werk uw opdrachtstatus bij; Thimo ziet de wijziging in de projectregie.</p></div><div class="supplier-progress-total"><strong>'+mine.filter(t=>t.status==="Afgerond").length+'/'+mine.length+'</strong><small>afgerond</small></div></div><div class="supplier-stack">'+statuses.map((s,i)=>'<div class="supplier-stack-segment s'+i+'" style="width:'+(counts[i]/total*100)+'%" title="'+s+': '+counts[i]+'"></div>').join("")+'</div><div class="supplier-legend">'+statuses.map((s,i)=>'<span><i class="s'+i+'"></i>'+s+' <b>'+counts[i]+'</b></span>').join("")+'</div></section>';
+ return progress+base;
+};
+/* Drag/drop is an alternative to the always-available status selector. */
+let draggedTaskId=null;
+document.addEventListener("dragstart",e=>{const card=e.target.closest("[data-kanban-task]");if(!card)return;draggedTaskId=card.dataset.kanbanTask;e.dataTransfer?.setData("text/plain",draggedTaskId);if(e.dataTransfer)e.dataTransfer.effectAllowed="move";card.classList.add("is-dragging")});
+document.addEventListener("dragend",e=>{e.target.closest("[data-kanban-task]")?.classList.remove("is-dragging");draggedTaskId=null});
+document.addEventListener("dragover",e=>{const lane=e.target.closest("[data-kanban-drop]");if(!lane)return;e.preventDefault();lane.classList.add("is-over")});
+document.addEventListener("dragleave",e=>{const lane=e.target.closest("[data-kanban-drop]");if(lane&&!lane.contains(e.relatedTarget))lane.classList.remove("is-over")});
+document.addEventListener("drop",async e=>{const lane=e.target.closest("[data-kanban-drop]");if(!lane)return;e.preventDefault();lane.classList.remove("is-over");const taskId=e.dataTransfer?.getData("text/plain")||draggedTaskId,t=(data.tasks||[]).find(x=>x.id===taskId);if(!t)return;t.status=lane.dataset.kanbanDrop;try{await persist("tasks",t);render();toast("Taak verplaatst naar "+t.status)}catch(err){toast("Taakstatus kon niet worden opgeslagen")};draggedTaskId=null});
+document.addEventListener("input",e=>{if(e.target.id!=="boardSearch")return;const q=e.target.value.toLocaleLowerCase("nl");document.querySelectorAll("[data-kanban-task]").forEach(card=>card.hidden=!card.dataset.search.includes(q))});
+
 connect();
