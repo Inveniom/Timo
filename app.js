@@ -42,7 +42,7 @@ const seed = {
  decisions:[],
  suppliers:[{id:"s-1",name:"Demo leverancier constructie",specialism:"Constructie",email:""} ,{id:"s-2",name:"Demo leverancier installaties",specialism:"Installaties",email:""}],
  tasks:[{id:"t-1",projectId:"p-parkzicht",supplierId:"s-1",title:"Eerste maakbaarheidstoets",status:"Nog niet gestart",due:"",scope:"Alleen conceptuele beoordeling; geen productievrijgave."}],
- documents:[],
+ documents:[],requirements:[],changes:[],supplierAgreements:[],controls:[],phaseReleases:[],aiHandovers:[],
  audit:[]
 };
 let data, role="client", page="Mijn project", customerId="c-parkzicht", projectId="p-parkzicht", token="", activeFloor=0, busy=false, chatDraft="", connected=false;
