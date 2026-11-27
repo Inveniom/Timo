@@ -50,15 +50,15 @@ jobs:
           curl -fsS -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $STAFF_TOKEN" -d '{"collection":"documents","record":{"id":"doc-unapproved","projectId":"p-parkzicht","name":"Intern test","status":"Ontvangen","audience":"customer"}}' http://127.0.0.1:8787/api/record > /dev/null
           CLIENT_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $CLIENT_TOKEN" http://127.0.0.1:8787/api/state)
           node -e 'const s=JSON.parse(process.argv[1]);if(s.data.documents.some(x=>x.id==="doc-unapproved"))process.exit(1)' "$CLIENT_STATE"
-          curl -fsS -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $STAFF_TOKEN" -d '{"collection":"documents","record":{"id":"doc-approved","projectId":"p-parkzicht","name":"Klantdocument","status":"Goedgekeurd","audience":"customer"}}' http://127.0.0.1:8787/api/record > /dev/null
+          curl -fsS -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $STAFF_TOKEN" -d '{"collection":"documents","record":{"id":"doc-approved","projectId":"p-parkzicht","name":"Klantdocument","status":"Goedgekeurd","audience":"customer","publishedAt":"2026-11-27T12:00:00.000Z"}}' http://127.0.0.1:8787/api/record > /dev/null
           CLIENT_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $CLIENT_TOKEN" http://127.0.0.1:8787/api/state)
           node -e 'const s=JSON.parse(process.argv[1]);if(!s.data.documents.some(x=>x.id==="doc-approved"))process.exit(1)' "$CLIENT_STATE"
           CLIENT_WRITE=$(curl -sS -o /tmp/thimo-client-write.json -w '%{http_code}' -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $CLIENT_TOKEN" -d '{"collection":"costs","record":{"id":"cost-1"}}' http://127.0.0.1:8787/api/record)
           test "$CLIENT_WRITE" = "403"
-          SUPPLIER_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"supplier"}' http://127.0.0.1:8787/api/auth)
+          SUPPLIER_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"supplier","supplierId":"s-1"}' http://127.0.0.1:8787/api/auth)
           SUPPLIER_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$SUPPLIER_AUTH")
           SUPPLIER_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $SUPPLIER_TOKEN" http://127.0.0.1:8787/api/state)
-          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.costs.length!==0||s.data.projects.some(p=>"budget" in p))process.exit(1)' "$SUPPLIER_STATE"
+          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.costs.length!==0||s.data.projects.some(p=>"budget" in p)||s.data.tasks.some(t=>t.supplierId!=="s-1")||!s.data.supplierOptions.some(x=>x.id==="s-2"))process.exit(1)' "$SUPPLIER_STATE"
       - name: Check required application files
         run: |
           test -s index.html
