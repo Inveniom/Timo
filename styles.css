@@ -251,3 +251,63 @@ footer{display:flex;justify-content:space-between;align-items:center;gap:18px;pa
 @media(prefers-reduced-motion:reduce){
  *,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+
+
+/* THIMO365 · krachtige visuele identiteit en werkgerichte bediening */
+:root{
+ --forest:#103b2e;--forest-2:#185640;--sage:#d4e2c6;--sage-2:#e8efdf;
+ --paper:#f0f3ed;--ink:#172b23;--muted:#586b60;--line:#cbd6c9;
+ --gold:#bd9950;--blue:#3e7180;--shadow:0 14px 36px rgba(16,59,46,.11);
+ --accent:#8da66c;--accent-strong:#557b3e;
+}
+body{background:linear-gradient(135deg,#edf1e9 0%,#f7f8f4 52%,#e8eee5 100%);color:var(--ink)}
+.topbar{background:linear-gradient(112deg,#0b3026 0%,#164b38 58%,#245e43 100%);border-bottom:5px solid #a6bd83;box-shadow:0 8px 26px rgba(9,43,32,.18)}
+.brand-mark{background:#dce8ca!important;color:#123c2d!important;box-shadow:0 5px 16px rgba(0,0,0,.16)}
+.sidebar{background:#f9fbf7;border-right:1px solid #c5d2c4}
+.sidebar-heading,.eyebrow{color:#55734e}
+.nav-button{border-radius:10px;font-weight:600;color:#40584b}
+.nav-button:hover{background:#e7eee1;color:#173f30}
+.nav-button.active{background:#dce8d1;color:#103b2e;box-shadow:inset 4px 0 #5f873f,0 3px 12px rgba(25,65,43,.08)}
+.app-shell main{padding-top:42px}
+.page-head h1{color:#103b2e;letter-spacing:-1.9px}
+.card{border:1px solid #d0dbce;border-radius:17px;background:rgba(255,255,255,.94);box-shadow:0 12px 30px rgba(20,54,38,.065)}
+.card h2,.card h3{color:#143e2e}
+.button{background:#164b36;border-color:#164b36;border-radius:9px;box-shadow:0 4px 10px rgba(15,62,43,.12);transition:transform .16s ease,background .16s ease,box-shadow .16s ease}
+.button:hover{background:#0d3528;transform:translateY(-1px);box-shadow:0 7px 16px rgba(15,62,43,.18)}
+.button.secondary{background:#e6eee0;color:#173f2f;border-color:#c3d2bc;box-shadow:none}
+.button.secondary:hover{background:#d7e5cd}
+.button.ghost{color:#174a35}
+.field input,.field select,.field textarea,.search-input,.chat-compose textarea{border-radius:9px;border-color:#bdcdbd;background:#fff}
+.field input:focus,.field select:focus,.field textarea:focus,.search-input:focus,.chat-compose textarea:focus{outline:3px solid rgba(112,151,82,.22);border-color:#63884e}
+th{background:#e5ecdf;color:#385542}
+td{border-bottom-color:#e0e7dc}
+.metric-card{background:linear-gradient(145deg,#fff 0%,#f0f5eb 100%)}
+.metric{color:#154832}
+.pill{background:#e3edda;color:#315b37;border-radius:999px}
+.pill.warning{background:#f7edcf;color:#765a20}
+.pill.danger{background:#f7e4e1;color:#913e36}
+.phase.current{background:#e4eedb;border-color:#78965d;box-shadow:inset 0 0 0 1px #78965d}
+.phase{border-radius:10px}
+.unit-card{border-radius:13px;transition:all .16s ease}
+.unit-card:hover{border-color:#779b60;transform:translateY(-2px);box-shadow:0 8px 20px rgba(27,65,39,.1)}
+.unit-card.selected{background:#e6efdc;border-color:#5d8248;box-shadow:inset 0 0 0 1px #5d8248}
+.proposal{border:2px solid #77945e;background:linear-gradient(145deg,#fbfdf8,#f0f5e9)}
+.chat-list{background:#edf2e9;border-radius:12px}
+.bubble{border-radius:13px}
+.bubble.user{background:#dce9d2;border-color:#c8d9bc}
+.notice{border-left:4px solid #6c914f;background:#e8efe2;border-radius:8px}
+footer{background:#103b2e;color:#e5eee2;border-top:4px solid #a6bd83}
+footer .footer-brand strong{color:#fff}
+.portfolio-tools{display:flex;align-items:center;gap:12px;margin:12px 0 18px;flex-wrap:wrap}
+.portfolio-tools .search-input{flex:1;min-width:220px;max-width:520px}
+.portfolio-tools .tiny{margin-left:auto}
+.project-table tbody tr[hidden]{display:none}
+.project-table tbody tr:hover{background:#f1f6ed}
+.metric-note{display:block;color:#607367;font-size:11px;margin-top:3px}
+.phase-bars{display:grid;gap:13px;margin-top:18px}
+.phase-bar-row{display:grid;grid-template-columns:minmax(140px,1fr) minmax(100px,2fr) 28px;gap:12px;align-items:center;font-size:12px}
+.phase-bar-track{height:9px;background:#e5ebe1;border-radius:99px;overflow:hidden}
+.phase-bar-track i{display:block;height:100%;background:linear-gradient(90deg,#2c6949,#91ad6c);border-radius:99px;min-width:0}
+.dashboard-actions{display:flex;gap:10px;justify-content:flex-end;margin:-8px 0 18px}
+.section-title-row{display:flex;justify-content:space-between;align-items:center;gap:16px}
+@media(max-width:760px){.portfolio-tools{align-items:stretch}.portfolio-tools .search-input{max-width:none}.portfolio-tools .tiny{width:100%;margin-left:0}.dashboard-actions{justify-content:flex-start}.phase-bar-row{grid-template-columns:1fr 1.2fr 24px;gap:8px}}
