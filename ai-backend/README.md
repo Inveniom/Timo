@@ -1,28 +1,38 @@
-# Timo AI-agent — automatische Cloudflare-uitrol
+# Cloudflare Worker — Thimo365
 
-De AI-agent draait als Cloudflare Worker. De browser bevat nooit de OpenAI API-sleutel.
+## Wat de Worker doet
+- Serveert een health endpoint.
+- Geeft rolgebonden sessies uit.
+- Leest en schrijft centrale projectrecords via één SQLite-backed Durable Object.
+- Filtert kostprijzen en interne gegevens uit klant- en leveranciersresponses.
+- Roept de OpenAI Responses API aan met projectcontext die server-side uit de database wordt gelezen.
+- Laat AI alleen antwoorden en conceptvoorstellen voorbereiden; formele besluiten blijven bij bevoegde personen.
 
-## Eenmalige GitHub-inrichting
+## Cloudflare-configuratie
+`wrangler.toml` declareert de SQLite Durable Object `ThimoDatabase`. Wrangler voert de namespace-migratie uit tijdens de Worker-deployment. De database wordt bij eerste toegang geïnitialiseerd met uitsluitend fictieve demogegevens.
 
-Voeg in GitHub bij **Inveniom/Timo → Settings → Secrets and variables → Actions** deze drie repository secrets toe:
+Benodigde bestaande secret:
+- `OPENAI_API_KEY`
 
-1. `CLOUDFLARE_API_TOKEN`: Cloudflare API-token met minimaal Workers Scripts: Edit en Account: Read voor het juiste account.
-2. `CLOUDFLARE_ACCOUNT_ID`: het Cloudflare Account ID.
-3. `OPENAI_API_KEY`: de geheime API-sleutel van het OpenAI API-platform (niet een ChatGPT-wachtwoord).
+Configuratievariabelen:
+- `ALLOWED_ORIGIN`: origin van de GitHub Pages-site.
+- `OPENAI_MODEL`: modelnaam.
+- `DEMO_MODE`: `true` uitsluitend voor de demo.
 
-Daarna wordt de Worker automatisch uitgerold bij een wijziging in `ai-backend/`, of handmatig via GitHub → Actions → Deploy Timo AI Worker → Run workflow.
+Voor niet-demo gebruik:
+1. Zet `DEMO_MODE` op `false`.
+2. Stel Cloudflare Worker secrets in: `STAFF_ACCESS_CODE`, `SUPPLIER_ACCESS_CODE` en `CLIENT_ACCESS_CODE`.
+3. Bouw projectgebonden klantuitnodigingen en leverancierstoewijzing in voordat echte accounts worden toegelaten.
+4. Stel bewaartermijnen, back-up/herstel en operationele toegangscontrole vast.
 
-## Worker-adres instellen in Timo
+## API
+- `GET /` — health.
+- `GET /api/health` — health.
+- `POST /api/auth` — rolgebonden demo-/toegangssessie.
+- `GET /api/state` — rolgefilterde centrale projectstand.
+- `POST /api/record` — gevalideerde registratie/upsert.
+- `POST /api/chat` — brongebonden AI-antwoord en conceptvoorstel.
+- `POST /api/reset` — alleen voor de demo-medewerkersrol.
 
-Na de eerste succesvolle workflow toont Wrangler de Worker-URL, normaal gesproken:
-`https://timo-agent.<jouw-workers.dev-subdomein>.workers.dev`
-
-Open de Timo-app op GitHub Pages, ga naar **AI-assistent** en plak dit HTTPS-adres in het veld **Cloudflare Worker-adres**. Het adres wordt alleen in de browser opgeslagen; er staat geen API-sleutel in de pagina.
-
-## Belangrijk
-
-- De toegestane browser-origin staat op `https://inveniom.github.io`.
-- De agent kan algemene kennisbankrecords als context ontvangen, maar lokale projectgegevens en chats worden niet centraal opgeslagen.
-- CORS/origincontrole is geen authenticatie. Stel voor openbaar productiegebruik Cloudflare rate limiting, kostenlimieten en aanvullende toegangsbeveiliging in.
-- Gebruik geen persoonsgegevens of vertrouwelijke documenten zolang privacy- en beveiligingsafspraken niet zijn ingericht.
-- Technische productinformatie is indicatief en moet door de leverancier worden bevestigd.
+## Belangrijke beperking van de eerste demo
+De demo gebruikt één Durable Object als centrale SQLite-database en voorbeeldrecords. Dit is een functionele basis voor de procesproef, geen definitieve multi-tenant productieomgeving. Voor productie zijn onder meer projectgebonden uitnodigingen, sterkere identiteitscontrole, granulariteit van leveranciersrechten, documentopslag, back-up/hersteltests en formele privacy-/bewaarafspraken vereist.
