@@ -801,3 +801,9 @@ td,th{padding:13px 12px}
 .terrain-readout small{font-size:8px;letter-spacing:.8px;font-weight:800;color:#849185}
 .terrain-readout strong{font-size:12px;color:#31543b}
 @media(max-width:650px){.terrain-editor-head{flex-direction:column}.terrain-tools label{flex:1 1 42%}.terrain-tools select,.terrain-tools input{width:100%}.terrain-readout{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Terrain dimension annotations */
+.site-plan svg{width:100%;height:auto;min-height:320px;touch-action:pan-y}
+.site-unit{cursor:grab;outline:none;touch-action:none}
+.site-unit:active{cursor:grabbing}
+.site-unit:focus rect{stroke:#173e2b;stroke-width:3}
