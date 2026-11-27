@@ -1,8 +1,17 @@
 name = "timo-agent"
 main = "worker.js"
-compatibility_date = "2026-11-25"
+compatibility_date = "2026-11-27"
 workers_dev = true
 
 [vars]
 ALLOWED_ORIGIN = "https://inveniom.github.io"
 OPENAI_MODEL = "gpt-4.1-mini"
+DEMO_MODE = "true"
+
+[[durable_objects.bindings]]
+name = "DB"
+class_name = "ThimoDatabase"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ThimoDatabase"]
