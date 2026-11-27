@@ -777,3 +777,5 @@ td,th{padding:13px 12px}
 .supplier-legend b{color:#385b40}
 @media(max-width:850px){.visual-phase-track{grid-template-columns:repeat(3,minmax(0,1fr))}.kanban-board{grid-template-columns:1fr}.kanban-dropzone{min-height:50px}.visual-board-head{align-items:flex-start;flex-direction:column}.board-search,.board-search input{width:100%}}
 @media(max-width:560px){.visual-journey-top,.supplier-progress-head{align-items:flex-start}.journey-ring{width:70px;height:70px;flex-basis:70px}.visual-phase-track{grid-template-columns:repeat(2,minmax(0,1fr))}.journey-shortcuts{grid-template-columns:1fr}.visual-journey,.supplier-progress-panel{padding:16px}}
+
+.kanban-board{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:850px){.kanban-board{grid-template-columns:1fr}}
