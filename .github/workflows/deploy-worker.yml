@@ -36,3 +36,22 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: wrangler deploy --config ai-backend/wrangler.toml
+      - name: Smoke test deployed Thimo365 API
+        run: |
+          set -euo pipefail
+          API_BASE="https://timo-agent.martijn-d1c.workers.dev"
+          curl -fsS --retry 5 --retry-delay 3 "$API_BASE/" > /tmp/thimo-health.json
+          CLIENT_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"client","projectId":"p-parkzicht","customerId":"c-parkzicht"}' "$API_BASE/api/auth")
+          CLIENT_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$CLIENT_AUTH")
+          CLIENT_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $CLIENT_TOKEN" "$API_BASE/api/state")
+          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.projects.length!==1||s.data.projectOptions.length!==3||s.data.costs.some(x=>"cost" in x))process.exit(1)' "$CLIENT_STATE"
+          STAFF_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"staff"}' "$API_BASE/api/auth")
+          STAFF_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$STAFF_AUTH")
+          STAFF_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $STAFF_TOKEN" "$API_BASE/api/state")
+          node -e 'const s=JSON.parse(process.argv[1]);if(!s.data.costs.some(x=>"cost" in x)||s.data.projects.length!==3)process.exit(1)' "$STAFF_STATE"
+          CLIENT_WRITE=$(curl -sS -o /tmp/thimo-client-write.json -w '%{http_code}' -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $CLIENT_TOKEN" -d '{"collection":"costs","record":{"id":"cost-1"}}' "$API_BASE/api/record")
+          test "$CLIENT_WRITE" = "403"
+          SUPPLIER_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"supplier"}' "$API_BASE/api/auth")
+          SUPPLIER_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$SUPPLIER_AUTH")
+          SUPPLIER_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $SUPPLIER_TOKEN" "$API_BASE/api/state")
+          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.costs.length!==0||s.data.projects.some(p=>"budget" in p))process.exit(1)' "$SUPPLIER_STATE"
