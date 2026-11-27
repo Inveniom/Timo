@@ -177,7 +177,49 @@ async function runIds(){
 }
 async function importBcf(){
  const f=$("#bcfFile")?.files?.[0];if(!f){toast("Selecteer eerst een BCF-bestand");return}
- try{let xmlDocs=[];if(f.name.toLowerCase().endsWith(".xml"))xmlDocs=[{name:f.name,text:await f.text()}];else{if(!window.JSZip)throw Error("BCFZIP-reader niet geladen; vernieuw de pagina en probeer opnieuw");const zip=await JSZip.loadAsync(f);for(const [name,file] of Object.entries(zip.files)){if(!file.dir&&name.endsWith("/markup.bcf"))xmlDocs.push({name,text:await file.async("text")})}}if(!xmlDocs.length)throw Error("Geen markup.bcf gevonden; controleer BCFZIP-versie");let count=0;for(const doc of xmlDocs){const xml=new DOMParser().parseFromString(doc.text,"application/xml");if(xml.querySelector("parsererror"))continue;for(const t of [...xml.getElementsByTagNameNS("*","Topic")]){const comps=[...xml.getElementsByTagNameNS("*","Component")].map(x=>x.getAttribute("IfcGuid")).filter(Boolean);const topic={id:id(),projectId:project().id,topicGuid:t.getAttribute("Guid")||id(),title:t.getAttribute("Title")||"BCF issue",status:t.getAttribute("TopicStatus")||"Open",priority:t.getAttribute("Priority")||"Normal",assignedTo:t.getAttribute("AssignedTo")||"",type:t.getAttribute("TopicType")||"Issue",components:comps,description:[...t.getElementsByTagNameNS("*","Description")].map(x=>x.textContent).join(" ").slice(0,4000),sourceFile:f.name,importedAt:now()};await bimPersist("bimIssues",topic);count++}}if(!count)throw Error("Geen BCF-topics aangetroffen");toast(count+" BCF-issues geïmporteerd");render()}catch(e){toast("BCF-import mislukt: "+e.message)}
+ try{
+  let archive=null,markupFiles=[];
+  if(f.name.toLowerCase().endsWith(".xml"))markupFiles=[{name:f.name,text:await f.text()}];
+  else{
+   if(!window.JSZip)throw Error("BCFZIP-reader niet geladen; vernieuw de pagina en probeer opnieuw");
+   archive=await JSZip.loadAsync(f);
+   for(const [name,file] of Object.entries(archive.files)){
+    if(!file.dir&&name.toLowerCase().endsWith("/markup.bcf"))markupFiles.push({name,text:await file.async("text")});
+   }
+  }
+  if(!markupFiles.length)throw Error("Geen markup.bcf gevonden; controleer of dit een BCFZIP-bestand is");
+  let count=0;
+  for(const doc of markupFiles){
+   const xml=new DOMParser().parseFromString(doc.text,"application/xml");
+   if(xml.querySelector("parsererror"))throw Error("Ongeldige markup.bcf XML: "+doc.name);
+   const folder=doc.name.includes("/")?doc.name.slice(0,doc.name.lastIndexOf("/")+1):"";
+   for(const t of [...xml.getElementsByTagNameNS("*","Topic")]){
+    const viewpointRefs=[...t.getElementsByTagNameNS("*","ViewPoint")].map(x=>x.getAttribute("Guid")).filter(Boolean);
+    const components=new Set();
+    // BCF componentselecties staan in viewpoint.bcfv, niet in markup.bcf.
+    if(archive){
+     for(const guid of viewpointRefs){
+      const suffix="/"+guid+".bcfv";
+      const entry=Object.entries(archive.files).find(([name,file])=>!file.dir&&(name===folder+guid+".bcfv"||name.toLowerCase().endsWith(suffix.toLowerCase())));
+      if(!entry)continue;
+      const viewXml=new DOMParser().parseFromString(await entry[1].async("text"),"application/xml");
+      if(viewXml.querySelector("parsererror"))continue;
+      for(const c of [...viewXml.getElementsByTagNameNS("*","Component")]){
+       const ifcGuid=c.getAttribute("IfcGuid");if(ifcGuid)components.add(ifcGuid);
+      }
+     }
+    }
+    // Compatibiliteit met eenvoudige BCF-XML-exporten die componenten in markup opnemen.
+    for(const c of [...t.getElementsByTagNameNS("*","Component")]){
+     const ifcGuid=c.getAttribute("IfcGuid");if(ifcGuid)components.add(ifcGuid);
+    }
+    const topic={id:id(),projectId:project().id,topicGuid:t.getAttribute("Guid")||id(),title:t.getAttribute("Title")||"BCF issue",status:t.getAttribute("TopicStatus")||"Open",priority:t.getAttribute("Priority")||"Normal",assignedTo:t.getAttribute("AssignedTo")||"",type:t.getAttribute("TopicType")||"Issue",components:[...components],viewpointGuids:viewpointRefs,description:[...t.getElementsByTagNameNS("*","Description")].map(x=>x.textContent).join(" ").slice(0,4000),sourceFile:f.name,importedAt:now()};
+    await bimPersist("bimIssues",topic);count++;
+   }
+  }
+  if(!count)throw Error("Geen BCF-topics aangetroffen");
+  toast(count+" BCF-issues geïmporteerd; componentkoppelingen uit viewpoints meegenomen");render();
+ }catch(e){toast("BCF-import mislukt: "+e.message)}
 }
 async function exportBcf(){
  if(!window.JSZip){toast("BCFZIP-exportbibliotheek niet geladen");return}const zip=new JSZip(),items=(data.bimIssues||[]).filter(x=>x.projectId===project().id);for(const x of items){const guid=x.topicGuid||id(),folder=guid+"/";zip.file(folder+"markup.bcf",'<?xml version="1.0" encoding="UTF-8"?><Markup xmlns="http://www.buildingsmart-tech.org/bcf/Markup"><Header/><Topic Guid="'+esc(guid)+'" TopicType="'+esc(x.type||"Issue")+'" TopicStatus="'+esc(x.status||"Open")+'" Priority="'+esc(x.priority||"Normal")+'" Title="'+esc(x.title)+'" AssignedTo="'+esc(x.assignedTo||"")+'"><Description>'+esc(x.description||"")+'</Description></Topic></Markup>');zip.file(folder+"extensions.xml",'<?xml version="1.0" encoding="UTF-8"?><Extensions xmlns="http://www.buildingsmart-tech.org/bcf/Extensions"><TopicTypes><TopicType>Issue</TopicType></TopicTypes><TopicStatuses><TopicStatus>Open</TopicStatus><TopicStatus>In Progress</TopicStatus><TopicStatus>Resolved</TopicStatus><TopicStatus>Closed</TopicStatus></TopicStatuses><Priorities><Priority>Critical</Priority><Priority>Major</Priority><Priority>Normal</Priority><Priority>Minor</Priority></Priorities><Stages/></Extensions>')}zip.file("bcf.version",'<?xml version="1.0" encoding="UTF-8"?><Version VersionId="3.0" xmlns="http://www.buildingsmart-tech.org/bcf/Version"/>');const blob=await zip.generateAsync({type:"blob"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=project().code+"-issues.bcfzip";a.click();URL.revokeObjectURL(url);toast(items.length+" BCF-issues geëxporteerd")
