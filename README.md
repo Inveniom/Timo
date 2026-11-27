@@ -1,20 +1,37 @@
-# Timo — klantgerichte ontwerp- en offerteadviseur
+# Thimo365 — verbonden klant-, project- en leveranciersproces
 
-De klantomgeving van Thimo365 bevat een Timo-gesprek dat de bezoeker stap voor stap begeleidt naar een voorlopig ontwerp, technische uitgangspunten en een indicatieve kostenopgave.
+Deze repository bevat de rebuild van Thimo365 op basis van **Thimo365 Proces en informatievoorziening, versie 1.0 (27 november 2026)**.
+
+## Omgevingen
+- **Klantcommunicatie:** intake, standaardmodulekeuze, ontwerpgesprek met Thimo, logistiek, conceptuele terreininpassing, voorlopig klantvoorstel, vraagstukken, documenten en besluiten.
+- **Thimo-basissysteem:** projectregie, moederinformatie, productdatabase, bewerkbare kostprijzen en verkoopprijzen, vraagafhandeling, besluiten, fasepoorten en leveranciersregie.
+- **Leverancierscommunicatie:** toegewezen opdrachten, technische documenten, controles, voortgang en afwijkingsmeldingen.
+
+Alle omgevingen werken via één centrale projectopslag. De server filtert informatie per rol. Kostprijzen en interne gegevens worden niet aan de klantomgeving geleverd.
+
+## Procesfasen
+1. Klantvraag en productkeuze
+2. Ontwerp (VO en DO)
+3. Contractvorming
+4. Technisch ontwerp (TO)
+5. Productievrijgave
+6. Productie, levering en afsluiting
+
+Een faseovergang vereist dat blokkerende punten zijn afgehandeld en een bevoegd besluit is geregistreerd. AI kan informatie ordenen en concepten voorbereiden, maar keurt geen ontwerp, prijs, contract, wijziging of productievrijgave goed.
 
 ## Techniek
+- Frontend: statische HTML/CSS/JavaScript op GitHub Pages.
+- Backend: Cloudflare Worker.
+- Centrale opslag: SQLite-backed Cloudflare Durable Object.
+- AI: OpenAI Responses API via de server; de API-sleutel staat uitsluitend als Cloudflare secret.
+- Deployment: GitHub Actions.
 
-- Frontend: GitHub Pages op `https://inveniom.github.io/Timo/`
-- AI-backend: Cloudflare Worker `https://timo-agent.martijn-d1c.workers.dev`
-- Model: `gpt-4.1-mini`
-- Browser-origin: `https://inveniom.github.io`
+## Demo
+De eerste dataset bevat PARKZICHT, DE GROENE HOF en HAVENKWARTIER. Alle prijzen in de demo zijn fictieve voorbeeldwaarden. Productmaten, technische prestaties en toepassingsgrenzen zijn niet gevalideerd en worden daarom als nog vast te stellen weergegeven.
 
-Het Worker-adres wordt automatisch door de klantomgeving gebruikt. De OpenAI API-sleutel blijft uitsluitend als Cloudflare secret op de server.
+De demo-modus staat in de Worker-configuratie aan. Dit is uitsluitend voor testen met fictieve gegevens. **Zet DEMO_MODE uit en stel afzonderlijke toegangscodes in voordat echte klant-, personeels-, leveranciers- of financiële gegevens worden verwerkt.**
 
-## Gedrag van Timo
+## Deployment
+De rebuild wordt eerst gecontroleerd op branch `rebuild/thimo365-platform`. Na controle kan deze naar `main` worden samengevoegd. De bestaande GitHub Pages- en Cloudflare Worker-workflows publiceren daarna de nieuwe versie.
 
-- Timo stelt maximaal één gerichte vervolgvraag per beurt.
-- Timo verzamelt projectwensen, locatie, aantallen, doelgroep, ruimte, planning en budget.
-- De klant krijgt een schematisch conceptvoorstel met uitgangspunten en specificaties.
-- De kostenopgave is indicatief. Er worden geen bedragen verzonnen; daarvoor is een actuele, gevalideerde prijslijst nodig.
-- Een schematische opstelling is geen maatvaste tekening of vergunningstoets.
+Zie `docs/ARCHITECTUUR.md` en `ai-backend/README.md` voor de functionele en technische uitgangspunten.
