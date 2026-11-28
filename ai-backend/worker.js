@@ -79,6 +79,35 @@ export default{async fetch(request,env){
   if(env.DEMO_MODE!=="true"){const code=safeText(b.accessCode,200);let expected="";if(b.role==="staff")expected=env.STAFF_ACCESS_CODE||"";else if(b.role==="client"){let map={};try{map=JSON.parse(env.CLIENT_ACCESS_CODES_JSON||"{}")}catch{}expected=map[b.projectId]||""}else{let map={};try{map=JSON.parse(env.SUPPLIER_ACCESS_CODES_JSON||"{}")}catch{}expected=map[b.supplierId]||""}if(!expected||code!==expected)return send({error:"Toegangscode ongeldig"},401,cors)}
   const stub=env.DB.get(env.DB.idFromName("thimo365-central")),res=await stub.fetch("https://db.internal/session",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});return new Response(await res.text(),{status:res.status,headers:{...cors,...jsonHeaders}});
  }
+ if(path==="/api/documents"&&["GET","POST"].includes(request.method)){
+  if(!env.DOCUMENTS)return send({error:"Documentopslag niet geconfigureerd: koppel de R2-bucket DOCUMENTS."},503,cors);
+  const auth=request.headers.get("Authorization")||"",stub=env.DB.get(env.DB.idFromName("thimo365-central")),vr=await stub.fetch("https://db.internal/session/validate",{headers:{Authorization:auth}}),session=await vr.json().catch(()=>null);
+  if(!session)return send({error:"Sessie verlopen of ongeldig"},401,cors);
+  if(request.method==="POST"){
+   if(session.role!=="staff")return send({error:"Alleen medewerkers kunnen documenten toevoegen"},403,cors);
+   const b=await parse(request),projectId=safeText(b?.projectId,100),filename=safeText(b?.filename,180),mime=safeText(b?.contentType||"application/octet-stream",120),audience=["internal","customer","supplier","all"].includes(b?.audience)?b.audience:"internal",status=["Concept","Ter beoordeling","Goedgekeurd","Vrijgegeven"].includes(b?.status)?b.status:"Concept";
+   if(!projectId||!filename||typeof b?.contentBase64!=="string")return send({error:"Project, bestandsnaam en base64-bestandsinhoud zijn verplicht"},400,cors);
+   const projectRes=await stub.fetch("https://db.internal/state",{headers:{Authorization:auth}}),state=await projectRes.json().catch(()=>null);
+   if(!state?.data?.projects?.some(p=>p.id===projectId))return send({error:"Project niet gevonden of niet toegankelijk"},404,cors);
+   let bytes;try{const raw=atob(b.contentBase64);if(raw.length>8*1024*1024)return send({error:"Maximale bestandsgrootte is 8 MB"},413,cors);bytes=Uint8Array.from(raw,c=>c.charCodeAt(0))}catch{return send({error:"Bestandsinhoud is geen geldige base64"},400,cors)}
+   const id=crypto.randomUUID(),key=projectId+"/"+id,uploadedAt=iso();
+   await env.DOCUMENTS.put(key,bytes,{httpMetadata:{contentType:mime},customMetadata:{projectId,documentId:id,filename,audience,status,uploadedBy:session.role,uploadedAt}});
+   return send({ok:true,document:{id,projectId,filename,contentType:mime,audience,status,uploadedAt,storage:"cloudflare-r2"}},201,cors);
+  }
+  const url=new URL(request.url),projectId=safeText(url.searchParams.get("projectId")||"",100),id=safeText(url.searchParams.get("id")||"",100);
+  if(!projectId)return send({error:"projectId is verplicht"},400,cors);
+  const stateRes=await stub.fetch("https://db.internal/state",{headers:{Authorization:auth}}),state=await stateRes.json().catch(()=>null);
+  if(!state?.data?.projects?.some(p=>p.id===projectId))return send({error:"Project niet gevonden of niet toegankelijk"},404,cors);
+  const canSee=meta=>session.role==="staff"||(session.role==="client"&&meta.audience!=="internal"&&["Goedgekeurd","Vrijgegeven"].includes(meta.status))||(session.role==="supplier"&&["supplier","all"].includes(meta.audience)&&["Goedgekeurd","Vrijgegeven"].includes(meta.status));
+  if(id){
+   const object=await env.DOCUMENTS.get(projectId+"/"+id);if(!object)return send({error:"Document niet gevonden"},404,cors);
+   const meta=object.customMetadata||{};if(!canSee(meta))return send({error:"Geen toegang tot dit document"},403,cors);
+   const headers=new Headers(cors);object.writeHttpMetadata(headers);headers.set("Content-Disposition",'attachment; filename="'+String(meta.filename||"document").replace(/["\\r\\n]/g,"_")+'"');headers.set("Cache-Control","private, no-store");
+   return new Response(object.body,{status:200,headers});
+  }
+  const listed=await env.DOCUMENTS.list({prefix:projectId+"/",limit:100}),items=listed.objects.map(o=>({id:o.customMetadata?.documentId,projectId,filename:o.customMetadata?.filename||o.key.split("/").pop(),audience:o.customMetadata?.audience,status:o.customMetadata?.status,uploadedAt:o.customMetadata?.uploadedAt,size:o.size})).filter(d=>canSee(d));
+  return send({documents:items},200,cors);
+ }
  if(path==="/api/bim/validate"&&request.method==="POST"){
   const auth=request.headers.get("Authorization")||"",stub=env.DB.get(env.DB.idFromName("thimo365-central")),vr=await stub.fetch("https://db.internal/session/validate",{headers:{Authorization:auth}}),session=await vr.json().catch(()=>null);
   if(!session||session.role!=="staff")return send({error:"Alleen medewerkers mogen BIM-bestanden controleren"},403,cors);
