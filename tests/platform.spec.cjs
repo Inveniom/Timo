@@ -73,6 +73,15 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await expect(page.locator("#terrain svg")).toBeVisible({timeout:30000});
   console.log("CHECKPOINT terrain loaded");
   await expect(page.locator(".floor-tab")).toHaveCount(3);
+  // The terrain editor cannot silently change the Step 1 total.
+  await page.locator("#main [data-action=add-unit]").click();
+  await expect(page.locator("#main h2")).toContainText("24 units");
+  const floorCounts = async () => (await page.locator(".floor-tab").allTextContents()).reduce((sum, label) => sum + Number((label.match(/·\s*(\d+) units/) || [])[1] || 0), 0);
+  await expect.poll(floorCounts).toBe(24);
+  // Adding a floor reallocates an existing unit instead of creating a 25th unit.
+  await page.locator("#main [data-action=add-floor]").click();
+  await expect(page.locator(".floor-tab")).toHaveCount(4);
+  await expect.poll(floorCounts).toBe(24);
   const unit = page.locator("#terrain [data-unit]").first();
   const before = await unit.getAttribute("transform");
   const rect = await unit.boundingBox();
