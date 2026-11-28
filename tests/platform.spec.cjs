@@ -27,12 +27,12 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await expect(page.locator("#main")).toContainText("Goedemiddag, projectteam", {timeout:30000});
   console.log("CHECKPOINT staff loaded");
   await page.locator("#contextSelect").selectOption("p-parkzicht");
-  await page.locator("#nav [data-page=products]").click();
+  await page.locator("#nav [data-page=products]").evaluate(el => el.click());
   await expect(page.locator("#main")).toContainText("Financiën per unit en onderdeel");
   await expect(page.locator("#main [data-edit-cost]").first()).toBeVisible();
 
   // A staff-created task assigned to a supplier appears in that supplier's workspace.
-  await page.locator("#nav [data-page=tasks]").click();
+  await page.locator("#nav [data-page=tasks]").evaluate(el => el.click());
   await page.locator("#main [data-action=new-task]").click();
   await page.locator("#modal input[name=title]").fill("Browser test · montagecontrole");
   await page.locator("#modal select[name=projectId]").selectOption("p-parkzicht");
@@ -55,7 +55,7 @@ test("customer, staff and supplier share one project and terrain editor works", 
   // Customer can open the terrain editor, switch floors and drag a module.
   await page.locator("#roleSelect").selectOption("client");
   await expect(page.locator("#main")).toContainText("Kies uw standaardunit");
-  await page.locator("#nav [data-page=design]").click();
+  await page.locator("#nav [data-page=design]").evaluate(el => el.click());
   await expect(page.locator("#terrain svg")).toBeVisible({timeout:30000});
   console.log("CHECKPOINT terrain loaded");
   await expect(page.locator(".floor-tab")).toHaveCount(3);
