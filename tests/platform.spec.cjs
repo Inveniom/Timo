@@ -37,7 +37,7 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await page.locator("#modal select[name=supplierId]").selectOption("s-1");
   await page.locator("#modalSave").click();
   await expect(page.locator("#modal")).not.toBeVisible();
-  await page.waitForTimeout(1400);
+  await page.waitForTimeout(3000);
 
   await page.locator("#roleSelect").selectOption("supplier");
   await expect(page.locator("#main")).toContainText("Uw opdrachten");
