@@ -45,6 +45,10 @@ jobs:
           STAFF_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$STAFF_AUTH")
           BIM_IFC=$(curl -fsS -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $STAFF_TOKEN" -d '{"format":"ifc","filename":"smoke.ifc","content":"ISO-10303-21;\nHEADER;\nFILE_SCHEMA(((''IFC4'')));\nENDSEC;\nDATA;\nENDSEC;\nEND-ISO-10303-21;"}' http://127.0.0.1:8787/api/bim/validate)
           node -e 'const r=JSON.parse(process.argv[1]);if(!r.valid||r.format!=="ifc")process.exit(1)' "$BIM_IFC"
+          BIM_IDS=$(curl -fsS -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $STAFF_TOKEN" -d '{"format":"ids","filename":"smoke.ids","content":"<ids:ids xmlns:ids=\"urn:test\"><ids:specifications/></ids:ids>"}' http://127.0.0.1:8787/api/bim/validate)
+          node -e 'const r=JSON.parse(process.argv[1]);if(!r.valid||r.format!=="ids")process.exit(1)' "$BIM_IDS"
+          BIM_BCF=$(curl -fsS -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $STAFF_TOKEN" -d '{"format":"bcf","filename":"smoke.bcf","content":"UEsDBA=="}' http://127.0.0.1:8787/api/bim/validate)
+          node -e 'const r=JSON.parse(process.argv[1]);if(!r.valid||r.format!=="bcf")process.exit(1)' "$BIM_BCF"
           BIM_CLIENT=$(curl -sS -o /tmp/thimo-bim-client.json -w '%{http_code}' -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $CLIENT_TOKEN" -d '{"format":"ifc","content":"ISO-10303-21;"}' http://127.0.0.1:8787/api/bim/validate)
           test "$BIM_CLIENT" = "403"
           STAFF_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $STAFF_TOKEN" http://127.0.0.1:8787/api/state)
