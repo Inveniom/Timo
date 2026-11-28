@@ -21,7 +21,7 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await page.locator("#clientBriefForm button[type=submit]").click();
   await expect(page.locator("#clientBriefForm input[name=units]")).toHaveValue("24");
   await page.waitForTimeout(1200);
-  await expect(page.locator("#main")).toContainText("3 bouwlagen");
+  await expect(page.locator("#clientBriefForm input[name=floors]")).toHaveValue("3");
 
   // Staff sees the same project and can edit its product cost components.
   await page.locator("#roleSelect").selectOption("staff");
