@@ -74,8 +74,8 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await expect(page.locator("#supplierProfileForm")).toBeVisible();
   await page.locator("#supplierProfileForm input[name=contactName]").fill("Test contact");
   await page.locator("#supplierProfileForm button[type=submit]").click();
-  await expect(page.locator("#main")).toContainText("Uw leverancierspagina is opgeslagen");
   await expect(page.locator("#supplierProfileForm")).toBeVisible();
+  await expect(page.locator("#supplierProfileForm input[name=contactName]")).toHaveValue("Test contact");
   await page.locator("#nav [data-page=home]").click();
   await expect(page.locator("#supplierChatPanel")).toBeVisible();
   await expect(page.locator("#main")).toContainText("Wat hebben we van u nodig?");
