@@ -30,6 +30,13 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await page.locator("#nav [data-page=products]").evaluate(el => el.click());
   await expect(page.locator("#main")).toContainText("Financiën per unit en onderdeel");
   await expect(page.locator("#main [data-edit-cost]").first()).toBeVisible();
+  await page.locator("#main [data-edit-cost]").first().click();
+  await page.locator("#modal input[name=cost]").fill("12345");
+  await page.locator("#modalSave").click();
+  await expect(page.locator("#modal")).not.toBeVisible();
+  await page.locator("#main [data-edit-cost]").first().click();
+  await expect(page.locator("#modal input[name=cost]")).toHaveValue("12345");
+  await page.locator("#modal .modal-close").click();
 
   // A staff-created task assigned to a supplier appears in that supplier's workspace.
   await page.locator("#nav [data-page=tasks]").evaluate(el => el.click());
