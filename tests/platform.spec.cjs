@@ -11,6 +11,9 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await page.goto("http://127.0.0.1:4173/?api=" + encodeURIComponent(api), { waitUntil: "domcontentloaded", timeout: 30000 });
   await expect(page.locator("#main")).toContainText("Uw project, helder in beeld", { timeout: 30000 });
   console.log("CHECKPOINT client loaded");
+  // init() renders the client shell before the asynchronous /api/auth and /api/state handshake completes.
+  // Wait for the central session before testing chat; otherwise bindChat correctly rejects the request.
+  await page.waitForFunction(() => { try { return JSON.parse(localStorage.getItem("thimo365-next") || "{}").remoteStatus === "connected"; } catch { return false; } }, null, { timeout: 30000 });
   await expect(page.locator("#main")).toContainText("Uw bericht aan Thimo");
   await page.route("**/api/chat", route => route.fulfill({status:200, contentType:"application/json", body:JSON.stringify({answer:"Thimo testantwoord", proposal:"Testvoorstel voor Parkzicht"})}));
   await page.locator("#chatInput").fill("Kan er een extra entree komen?");
