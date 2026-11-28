@@ -44,7 +44,7 @@ jobs:
           CLIENT_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"client","projectId":"p-parkzicht","customerId":"c-parkzicht"}' "$API_BASE/api/auth")
           CLIENT_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$CLIENT_AUTH")
           CLIENT_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $CLIENT_TOKEN" "$API_BASE/api/state")
-          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.projects.length!==1||s.data.projectOptions.length!==3||s.data.costs.some(x=>"cost" in x))process.exit(1)' "$CLIENT_STATE"
+          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.projects.length!==1||s.data.projectOptions.length!==3||s.data.costs.length!==0||s.data.products.some(x=>"cost" in x||"sale" in x)||"budget" in s.data.projects[0])process.exit(1)' "$CLIENT_STATE"
           STAFF_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"staff"}' "$API_BASE/api/auth")
           STAFF_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$STAFF_AUTH")
           STAFF_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $STAFF_TOKEN" "$API_BASE/api/state")
@@ -54,4 +54,4 @@ jobs:
           SUPPLIER_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"supplier"}' "$API_BASE/api/auth")
           SUPPLIER_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$SUPPLIER_AUTH")
           SUPPLIER_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $SUPPLIER_TOKEN" "$API_BASE/api/state")
-          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.costs.length!==0||s.data.projects.some(p=>"budget" in p))process.exit(1)' "$SUPPLIER_STATE"
+          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.costs.length!==0||s.data.products.some(x=>"cost" in x||"sale" in x)||s.data.projects.some(p=>"budget" in p))process.exit(1)' "$SUPPLIER_STATE"

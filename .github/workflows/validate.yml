@@ -1,10 +1,13 @@
 name: Validate Thimo365 rebuild
 on:
   push:
-    branches: ["main", "rebuild/**"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
+concurrency:
+  group: thimo365-validation-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -26,7 +29,7 @@ jobs:
       - name: Smoke test local Worker API and role filtering
         run: |
           set -euo pipefail
-          wrangler dev --config ai-backend/wrangler.toml --port 8787 > /tmp/thimo-worker.log 2>&1 &
+          wrangler dev --config ai-backend/wrangler.toml --port 8787 --var DEMO_MODE:true > /tmp/thimo-worker.log 2>&1 &
           PID=$!
           trap 'kill "$PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do
@@ -34,12 +37,31 @@ jobs:
             sleep 2
           done
           test -s /tmp/thimo-health.json
+          wrangler dev --config ai-backend/wrangler.toml --port 8788 --var DEMO_MODE:false --var STAFF_ACCESS_CODE:ci-staff --var 'CLIENT_ACCESS_CODES_JSON:{"p-parkzicht":"ci-client"}' --var 'SUPPLIER_ACCESS_CODES_JSON:{"s-1":"ci-supplier"}' > /tmp/thimo-worker-secure.log 2>&1 &
+          SECURE_PID=$!
+          trap 'kill "$PID" "$SECURE_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8788/ > /dev/null; then break; fi
+            sleep 2
+          done
+          MISSING_CODE=$(curl -sS -o /tmp/thimo-missing-code.json -w '%{http_code}' -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"staff"}' http://127.0.0.1:8788/api/auth)
+          test "$MISSING_CODE" = "401"
+          VALID_CODE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"staff","accessCode":"ci-staff"}' http://127.0.0.1:8788/api/auth)
+          node -e 'if(!JSON.parse(process.argv[1]).token)process.exit(1)' "$VALID_CODE"
           CLIENT_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"client","projectId":"p-parkzicht","customerId":"c-parkzicht"}' http://127.0.0.1:8787/api/auth)
           CLIENT_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$CLIENT_AUTH")
           CLIENT_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $CLIENT_TOKEN" http://127.0.0.1:8787/api/state)
-          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.projects.length!==1||s.data.projectOptions.length!==3||s.data.costs.some(x=>"cost" in x))process.exit(1)' "$CLIENT_STATE"
+          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.projects.length!==1||s.data.projectOptions.length!==3||s.data.costs.length!==0||s.data.products.some(x=>"cost" in x||"sale" in x)||"budget" in s.data.projects[0])process.exit(1)' "$CLIENT_STATE"
           STAFF_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"staff"}' http://127.0.0.1:8787/api/auth)
           STAFF_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$STAFF_AUTH")
+          BIM_IFC=$(curl -fsS -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $STAFF_TOKEN" -d '{"format":"ifc","filename":"smoke.ifc","content":"ISO-10303-21;\nHEADER;\nFILE_SCHEMA(((''IFC4'')));\nENDSEC;\nDATA;\nENDSEC;\nEND-ISO-10303-21;"}' http://127.0.0.1:8787/api/bim/validate)
+          node -e 'const r=JSON.parse(process.argv[1]);if(!r.valid||r.format!=="ifc")process.exit(1)' "$BIM_IFC"
+          BIM_IDS=$(curl -fsS -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $STAFF_TOKEN" -d '{"format":"ids","filename":"smoke.ids","content":"<ids:ids xmlns:ids=\"urn:test\"><ids:specifications/></ids:ids>"}' http://127.0.0.1:8787/api/bim/validate)
+          node -e 'const r=JSON.parse(process.argv[1]);if(!r.valid||r.format!=="ids")process.exit(1)' "$BIM_IDS"
+          BIM_BCF=$(curl -fsS -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $STAFF_TOKEN" -d '{"format":"bcf","filename":"smoke.bcf","content":"UEsDBA=="}' http://127.0.0.1:8787/api/bim/validate)
+          node -e 'const r=JSON.parse(process.argv[1]);if(!r.valid||r.format!=="bcf")process.exit(1)' "$BIM_BCF"
+          BIM_CLIENT=$(curl -sS -o /tmp/thimo-bim-client.json -w '%{http_code}' -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $CLIENT_TOKEN" -d '{"format":"ifc","content":"ISO-10303-21;"}' http://127.0.0.1:8787/api/bim/validate)
+          test "$BIM_CLIENT" = "403"
           STAFF_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $STAFF_TOKEN" http://127.0.0.1:8787/api/state)
           node -e 'const s=JSON.parse(process.argv[1]);if(!s.data.costs.some(x=>"cost" in x)||s.data.projects.length!==3)process.exit(1)' "$STAFF_STATE"
           STAFF_PROJECT=$(node -e 'const s=JSON.parse(process.argv[1]);console.log(JSON.stringify(s.data.projects.find(p=>p.id==="p-parkzicht")) )' "$STAFF_STATE")
@@ -64,10 +86,30 @@ jobs:
           node -e 'const s=JSON.parse(process.argv[1]);if(s.data.questions.some(x=>x.id==="supplier-private-question"))process.exit(1)' "$CLIENT_STATE"
           CLIENT_WRITE=$(curl -sS -o /tmp/thimo-client-write.json -w '%{http_code}' -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $CLIENT_TOKEN" -d '{"collection":"costs","record":{"id":"cost-1"}}' http://127.0.0.1:8787/api/record)
           test "$CLIENT_WRITE" = "403"
+          INVALID_LAYOUT=$(curl -sS -o /tmp/thimo-invalid-layout.json -w '%{http_code}' -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $CLIENT_TOKEN" -d '{"collection":"projects","record":{"id":"p-parkzicht","unitCount":24,"floorCount":3,"layout":{"floors":[{"units":8},{"units":8},{"units":7}],"units":[]}}}' http://127.0.0.1:8787/api/record)
+          test "$INVALID_LAYOUT" = "422"
           SUPPLIER_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"supplier","supplierId":"s-1"}' http://127.0.0.1:8787/api/auth)
           SUPPLIER_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$SUPPLIER_AUTH")
           SUPPLIER_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $SUPPLIER_TOKEN" http://127.0.0.1:8787/api/state)
-          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.costs.length!==0||s.data.projects.some(p=>"budget" in p)||s.data.tasks.some(t=>t.supplierId!=="s-1")||!s.data.supplierOptions.some(x=>x.id==="s-2"))process.exit(1)' "$SUPPLIER_STATE"
+          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.costs.length!==0||s.data.products.some(x=>"cost" in x||"sale" in x)||s.data.projects.some(p=>"budget" in p)||s.data.tasks.some(t=>t.supplierId!=="s-1")||!s.data.supplierOptions.some(x=>x.id==="s-2"))process.exit(1)' "$SUPPLIER_STATE"
+      - name: Install Playwright browser
+        run: |
+          npm init -y
+          npm install --no-save @playwright/test
+          npx playwright install --with-deps chromium
+      - name: Run three-role browser acceptance test
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/thimo-static.log 2>&1 &
+          STATIC_PID=$!
+          wrangler dev --config ai-backend/wrangler.toml --port 8787 --var ALLOWED_ORIGIN:http://127.0.0.1:4173 --var DEMO_MODE:true > /tmp/thimo-worker-browser.log 2>&1 &
+          WORKER_PID=$!
+          trap 'kill "$STATIC_PID" "$WORKER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/ > /dev/null && curl -fsS http://127.0.0.1:8787/ > /dev/null; then break; fi
+            sleep 2
+          done
+          npx playwright test tests/platform.spec.cjs --reporter=line
       - name: Check required application files
         run: |
           test -s index.html

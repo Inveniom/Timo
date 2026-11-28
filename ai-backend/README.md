@@ -6,6 +6,7 @@
 - Leest en schrijft centrale projectrecords via één SQLite-backed Durable Object.
 - Filtert kostprijzen en interne gegevens uit klant- en leveranciersresponses.
 - Roept de OpenAI Responses API aan met projectcontext die server-side uit de database wordt gelezen.
+- Ondersteunt in de demo lokale documentopslag in de browser (IndexedDB), zonder betaalde opslagdienst.
 - Laat AI alleen antwoorden en conceptvoorstellen voorbereiden; formele besluiten blijven bij bevoegde personen.
 
 ## Cloudflare-configuratie
@@ -13,6 +14,13 @@
 
 Benodigde bestaande secret:
 - `OPENAI_API_KEY`
+
+Documenten in de kosteloze demo:
+- De frontend bewaart bestanden lokaal in IndexedDB op het huidige apparaat en in de huidige browser.
+- Maximale bestandsgrootte in de demo: 4 MB per bestand.
+- Documentmetadata blijft onderdeel van de projectregistratie; het bestand zelf wordt niet naar de centrale server verzonden.
+- Lokaal opgeslagen bestanden zijn niet beschikbaar op andere apparaten, in andere browsers of na het wissen van browsergegevens. Dit is geen beveiligde centrale documentkluis en heeft geen automatische back-up.
+- De optionele R2 API-code is niet actief zolang geen R2-binding is ingesteld. Er hoeft geen bucket te worden aangemaakt.
 
 Configuratievariabelen:
 - `ALLOWED_ORIGIN`: origin van de GitHub Pages-site.
@@ -32,6 +40,8 @@ Voor niet-demo gebruik:
 - `GET /api/state` — rolgefilterde centrale projectstand.
 - `POST /api/record` — gevalideerde registratie/upsert.
 - `POST /api/chat` — brongebonden AI-antwoord en conceptvoorstel.
+- `POST /api/documents` — beveiligde documentupload naar R2 (staff).
+- `GET /api/documents` — rolgefilterde documentlijst of download.
 - `POST /api/reset` — alleen voor de demo-medewerkersrol.
 
 ## Belangrijke beperking van de eerste demo
