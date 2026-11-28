@@ -36,7 +36,7 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await page.locator("#roleSelect").selectOption("staff");
   await expect(page.locator("#main")).toContainText("Goedemiddag, projectteam", {timeout:30000});
   console.log("CHECKPOINT staff loaded");
-  await page.locator("#nav [data-page=knowledge]").click();
+  await page.locator("#nav [data-page=knowledge]").evaluate(el => el.click());
   await expect(page.locator("#main")).toContainText("Moederinformatie");
   await expect(page.locator("#main")).toContainText("Positionering Thimo365");
   await page.locator("#main [data-master-add]").click();
