@@ -66,7 +66,10 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await page.waitForTimeout(3000);
 
   await page.locator("#roleSelect").selectOption("supplier");
-  await expect(page.locator("#main")).toContainText("Uw opdrachten", {timeout:30000});
+  await expect(page.locator("#main")).toContainText("Uw leverancierswerkplaats", {timeout:30000});
+  await expect(page.locator("#main")).toContainText("Levering aanmelden");
+  await expect(page.locator("#main")).toContainText("Technische documentatie");
+  await expect(page.locator("#main")).toContainText("Vraagstukken");
   console.log("CHECKPOINT supplier loaded");
   await page.locator("#nav [data-page=tasks]").click();
   await expect(page.locator("#main")).toContainText("Browser test · montagecontrole", { timeout: 10000 });
