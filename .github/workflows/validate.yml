@@ -37,6 +37,17 @@ jobs:
             sleep 2
           done
           test -s /tmp/thimo-health.json
+          wrangler dev --config ai-backend/wrangler.toml --port 8788 --var DEMO_MODE:false --var STAFF_ACCESS_CODE:ci-staff --var 'CLIENT_ACCESS_CODES_JSON:{"p-parkzicht":"ci-client"}' --var 'SUPPLIER_ACCESS_CODES_JSON:{"s-1":"ci-supplier"}' > /tmp/thimo-worker-secure.log 2>&1 &
+          SECURE_PID=$!
+          trap 'kill "$PID" "$SECURE_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8788/ > /dev/null; then break; fi
+            sleep 2
+          done
+          MISSING_CODE=$(curl -sS -o /tmp/thimo-missing-code.json -w '%{http_code}' -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"staff"}' http://127.0.0.1:8788/api/auth)
+          test "$MISSING_CODE" = "401"
+          VALID_CODE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"staff","accessCode":"ci-staff"}' http://127.0.0.1:8788/api/auth)
+          node -e 'if(!JSON.parse(process.argv[1]).token)process.exit(1)' "$VALID_CODE"
           CLIENT_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"client","projectId":"p-parkzicht","customerId":"c-parkzicht"}' http://127.0.0.1:8787/api/auth)
           CLIENT_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$CLIENT_AUTH")
           CLIENT_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $CLIENT_TOKEN" http://127.0.0.1:8787/api/state)
