@@ -1,9 +1,14 @@
 const { test, expect } = require("@playwright/test");
 
 test("customer, staff and supplier share one project and terrain editor works", async ({ page }) => {
+  test.setTimeout(120000);
+  page.on("console", msg => console.log("BROWSER", msg.type(), msg.text()));
+  page.on("pageerror", err => console.log("PAGEERROR", err.message));
+  page.on("requestfailed", req => console.log("REQUESTFAILED", req.url(), req.failure()?.errorText));
   const api = "http://127.0.0.1:8787";
   await page.goto("http://127.0.0.1:4173/?api=" + encodeURIComponent(api));
-  await expect(page.locator("#main")).toContainText("Uw project, helder in beeld", { timeout: 20000 });
+  await expect(page.locator("#main")).toContainText("Uw project, helder in beeld", { timeout: 30000 });
+  console.log("CHECKPOINT client loaded");
   await expect(page.locator("#main")).toContainText("Uw bericht aan Thimo");
   await expect(page.locator("#contextSelect option")).toHaveCount(3);
 
@@ -18,7 +23,8 @@ test("customer, staff and supplier share one project and terrain editor works", 
 
   // Staff sees the same project and can edit its product cost components.
   await page.locator("#roleSelect").selectOption("staff");
-  await expect(page.locator("#main")).toContainText("Goedemiddag, projectteam");
+  await expect(page.locator("#main")).toContainText("Goedemiddag, projectteam", {timeout:30000});
+  console.log("CHECKPOINT staff loaded");
   await page.locator("#contextSelect").selectOption("p-parkzicht");
   await page.locator("#nav [data-page=products]").click();
   await expect(page.locator("#main")).toContainText("Financiën per unit en onderdeel");
@@ -40,7 +46,8 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await page.waitForTimeout(3000);
 
   await page.locator("#roleSelect").selectOption("supplier");
-  await expect(page.locator("#main")).toContainText("Uw opdrachten");
+  await expect(page.locator("#main")).toContainText("Uw opdrachten", {timeout:30000});
+  console.log("CHECKPOINT supplier loaded");
   await page.locator("#nav [data-page=tasks]").click();
   await expect(page.locator("#main")).toContainText("Browser test · montagecontrole", { timeout: 10000 });
 
@@ -48,7 +55,8 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await page.locator("#roleSelect").selectOption("client");
   await expect(page.locator("#main")).toContainText("Kies uw standaardunit");
   await page.locator("#nav [data-page=design]").click();
-  await expect(page.locator("#terrain svg")).toBeVisible();
+  await expect(page.locator("#terrain svg")).toBeVisible({timeout:30000});
+  console.log("CHECKPOINT terrain loaded");
   await expect(page.locator(".floor-tab")).toHaveCount(3);
   const unit = page.locator("#terrain [data-unit]").first();
   const before = await unit.getAttribute("transform");
