@@ -1,10 +1,13 @@
 name: Validate Thimo365 rebuild
 on:
   push:
-    branches: ["main", "rebuild/**"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
+concurrency:
+  group: thimo365-validation-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
