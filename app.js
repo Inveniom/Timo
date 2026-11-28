@@ -45,7 +45,7 @@ async function syncRemote(){
   else{for(const p of db.projects)await pushRemoteRecord("projects",p);for(const c of ["products","costs","tasks","questions","decisions","documents","suppliers","deliveries"])for(const r of db[c]||[])await pushRemoteRecord(c,r)}
  }while(remoteSyncAgain)}finally{remoteSyncBusy=false;remotePending=false}
 }
-function switchRole(next){role=next;page="home";floor=0;selectedUnit=null;try{await connectRemote();notify("Verbonden met de centrale projectomgeving.")}catch(e){console.warn("Centrale omgeving niet bereikbaar",e);remoteEnabled=false;remoteToken="";notify("Lokale demo actief; centrale verbinding niet beschikbaar.")}render()}
+async function switchRole(next){role=next;page="home";floor=0;selectedUnit=null;try{await connectRemote();notify("Verbonden met de centrale projectomgeving.")}catch(e){console.warn("Centrale omgeving niet bereikbaar",e);remoteEnabled=false;remoteToken="";notify("Lokale demo actief; centrale verbinding niet beschikbaar.")}render()}
 function id(prefix){return prefix+"-"+Date.now().toString(36)+"-"+(db.nextId++)}
 function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function money(n){return new Intl.NumberFormat("nl-NL",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n||0)}
