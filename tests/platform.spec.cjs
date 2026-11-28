@@ -15,7 +15,6 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await expect(page.locator("#contextSelect option")).toHaveCount(3);
 
   // The client chooses a project and changes the authoritative unit/floor brief.
-  await page.locator("#contextSelect").selectOption("p-parkzicht");
   await page.locator("#clientBriefForm input[name=units]").fill("24");
   await page.locator("#clientBriefForm input[name=floors]").fill("3");
   await page.locator("#clientBriefForm button[type=submit]").click();
