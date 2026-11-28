@@ -29,7 +29,7 @@ jobs:
       - name: Smoke test local Worker API and role filtering
         run: |
           set -euo pipefail
-          wrangler dev --config ai-backend/wrangler.toml --port 8787 > /tmp/thimo-worker.log 2>&1 &
+          wrangler dev --config ai-backend/wrangler.toml --port 8787 --var DEMO_MODE:true > /tmp/thimo-worker.log 2>&1 &
           PID=$!
           trap 'kill "$PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do
@@ -87,7 +87,7 @@ jobs:
           set -euo pipefail
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/thimo-static.log 2>&1 &
           STATIC_PID=$!
-          wrangler dev --config ai-backend/wrangler.toml --port 8787 --var ALLOWED_ORIGIN:http://127.0.0.1:4173 > /tmp/thimo-worker-browser.log 2>&1 &
+          wrangler dev --config ai-backend/wrangler.toml --port 8787 --var ALLOWED_ORIGIN:http://127.0.0.1:4173 --var DEMO_MODE:true > /tmp/thimo-worker-browser.log 2>&1 &
           WORKER_PID=$!
           trap 'kill "$STATIC_PID" "$WORKER_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 40); do
