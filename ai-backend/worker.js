@@ -85,18 +85,18 @@ export default{async fetch(request,env){
   const b=await parse(request);if(!b||typeof b.content!=="string"||b.content.length>14000000)return send({error:"Bestandsinhoud ontbreekt of is groter dan 10 MB"},400,cors);
   const format=String(b.format||"").toLowerCase(),name=safeText(b.filename||"",180),content=b.content,issues=[];
   if(format==="ifc"){
-   if(!/^ISO-10303-21;\\s*/.test(content))issues.push("IFC-header ISO-10303-21 ontbreekt.");
-   if(!/END-ISO-10303-21;\\s*$/.test(content))issues.push("IFC-eindmarkering ontbreekt.");
-   if(!/FILE_SCHEMA\\s*\\(\\s*\\(/.test(content))issues.push("FILE_SCHEMA-declaratie ontbreekt.");
+   if(!/^ISO-10303-21;\s*/.test(content))issues.push("IFC-header ISO-10303-21 ontbreekt.");
+   if(!/END-ISO-10303-21;\s*$/.test(content))issues.push("IFC-eindmarkering ontbreekt.");
+   if(!/FILE_SCHEMA\s*\(\s*\(/.test(content))issues.push("FILE_SCHEMA-declaratie ontbreekt.");
   }else if(format==="ids"){
-   if(!/<(?:\\w+:)?ids\\b/i.test(content))issues.push("IDS-root-element ontbreekt.");
-   if(!/<(?:\\w+:)?specifications\\b/i.test(content))issues.push("IDS specifications-element ontbreekt.");
-   if(!/(?:xmlns(?::\\w+)?\\s*=)/i.test(content))issues.push("XML-namespace ontbreekt.");
+   if(!/<(?:\w+:)?ids\b/i.test(content))issues.push("IDS-root-element ontbreekt.");
+   if(!/<(?:\w+:)?specifications\b/i.test(content))issues.push("IDS specifications-element ontbreekt.");
+   if(!/(?:xmlns(?::\w+)?\s*=)/i.test(content))issues.push("XML-namespace ontbreekt.");
   }else if(format==="bcf"){
    try{const bytes=Uint8Array.from(atob(content),c=>c.charCodeAt(0));if(bytes.length<4||bytes[0]!==0x50||bytes[1]!==0x4b||bytes[2]!==0x03||bytes[3]!==0x04)issues.push("BCF-bestand heeft geen herkenbare ZIP-container.");}
    catch{issues.push("BCF-inhoud is geen geldige base64 ZIP-inhoud.");}
   }else return send({error:"Ondersteunde preflight-formaten: IFC, IDS en BCF"},400,cors);
-  return send({filename:name,format,valid:issues.length===0,issues,scope:"Structurele preflight בלבד; geen volledige IFC-schema-, IDS-regelset- of BCF-topicvalidatie en geen modelimport/export."},200,cors);
+  return send({filename:name,format,valid:issues.length===0,issues,scope:"Structurele preflight alleen; geen volledige IFC-schema-, IDS-regelset- of BCF-topicvalidatie en geen modelimport/export."},200,cors);
  }
  if(["/api/state","/api/record","/api/reset"].includes(path)){const stub=env.DB.get(env.DB.idFromName("thimo365-central")),inner=path.replace("/api",""),res=await stub.fetch(new Request("https://db.internal"+inner,request));return new Response(await res.text(),{status:res.status,headers:{...cors,...jsonHeaders}})}
  if(path==="/api/chat"&&request.method==="POST"){
