@@ -6,7 +6,9 @@ test("customer, staff and supplier share one project and terrain editor works", 
   page.on("pageerror", err => console.log("PAGEERROR", err.message));
   page.on("requestfailed", req => console.log("REQUESTFAILED", req.url(), req.failure()?.errorText));
   const api = "http://127.0.0.1:8787";
-  await page.goto("http://127.0.0.1:4173/?api=" + encodeURIComponent(api));
+  await page.route("https://fonts.googleapis.com/**", route => route.abort());
+  await page.route("https://fonts.gstatic.com/**", route => route.abort());
+  await page.goto("http://127.0.0.1:4173/?api=" + encodeURIComponent(api), { waitUntil: "domcontentloaded", timeout: 30000 });
   await expect(page.locator("#main")).toContainText("Uw project, helder in beeld", { timeout: 30000 });
   console.log("CHECKPOINT client loaded");
   await expect(page.locator("#main")).toContainText("Uw bericht aan Thimo");
