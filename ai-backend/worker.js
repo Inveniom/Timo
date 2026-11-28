@@ -79,6 +79,25 @@ export default{async fetch(request,env){
   if(env.DEMO_MODE!=="true"){const code=safeText(b.accessCode,200);let expected="";if(b.role==="staff")expected=env.STAFF_ACCESS_CODE||"";else if(b.role==="client"){let map={};try{map=JSON.parse(env.CLIENT_ACCESS_CODES_JSON||"{}")}catch{}expected=map[b.projectId]||""}else{let map={};try{map=JSON.parse(env.SUPPLIER_ACCESS_CODES_JSON||"{}")}catch{}expected=map[b.supplierId]||""}if(!expected||code!==expected)return send({error:"Toegangscode ongeldig"},401,cors)}
   const stub=env.DB.get(env.DB.idFromName("thimo365-central")),res=await stub.fetch("https://db.internal/session",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});return new Response(await res.text(),{status:res.status,headers:{...cors,...jsonHeaders}});
  }
+ if(path==="/api/bim/validate"&&request.method==="POST"){
+  const auth=request.headers.get("Authorization")||"",stub=env.DB.get(env.DB.idFromName("thimo365-central")),vr=await stub.fetch("https://db.internal/session/validate",{headers:{Authorization:auth}}),session=await vr.json().catch(()=>null);
+  if(!session||session.role!=="staff")return send({error:"Alleen medewerkers mogen BIM-bestanden controleren"},403,cors);
+  const b=await parse(request);if(!b||typeof b.content!=="string"||b.content.length>14000000)return send({error:"Bestandsinhoud ontbreekt of is groter dan 10 MB"},400,cors);
+  const format=String(b.format||"").toLowerCase(),name=safeText(b.filename||"",180),content=b.content,issues=[];
+  if(format==="ifc"){
+   if(!/^ISO-10303-21;\\s*/.test(content))issues.push("IFC-header ISO-10303-21 ontbreekt.");
+   if(!/END-ISO-10303-21;\\s*$/.test(content))issues.push("IFC-eindmarkering ontbreekt.");
+   if(!/FILE_SCHEMA\\s*\\(\\s*\\(/.test(content))issues.push("FILE_SCHEMA-declaratie ontbreekt.");
+  }else if(format==="ids"){
+   if(!/<(?:\\w+:)?ids\\b/i.test(content))issues.push("IDS-root-element ontbreekt.");
+   if(!/<(?:\\w+:)?specifications\\b/i.test(content))issues.push("IDS specifications-element ontbreekt.");
+   if(!/(?:xmlns(?::\\w+)?\\s*=)/i.test(content))issues.push("XML-namespace ontbreekt.");
+  }else if(format==="bcf"){
+   try{const bytes=Uint8Array.from(atob(content),c=>c.charCodeAt(0));if(bytes.length<4||bytes[0]!==0x50||bytes[1]!==0x4b||bytes[2]!==0x03||bytes[3]!==0x04)issues.push("BCF-bestand heeft geen herkenbare ZIP-container.");}
+   catch{issues.push("BCF-inhoud is geen geldige base64 ZIP-inhoud.");}
+  }else return send({error:"Ondersteunde preflight-formaten: IFC, IDS en BCF"},400,cors);
+  return send({filename:name,format,valid:issues.length===0,issues,scope:"Structurele preflight בלבד; geen volledige IFC-schema-, IDS-regelset- of BCF-topicvalidatie en geen modelimport/export."},200,cors);
+ }
  if(["/api/state","/api/record","/api/reset"].includes(path)){const stub=env.DB.get(env.DB.idFromName("thimo365-central")),inner=path.replace("/api",""),res=await stub.fetch(new Request("https://db.internal"+inner,request));return new Response(await res.text(),{status:res.status,headers:{...cors,...jsonHeaders}})}
  if(path==="/api/chat"&&request.method==="POST"){
   if(!env.OPENAI_API_KEY)return send({error:"AI-sleutel ontbreekt op de server"},503,cors);
