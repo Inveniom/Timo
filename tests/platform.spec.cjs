@@ -12,6 +12,11 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await expect(page.locator("#main")).toContainText("Uw project, helder in beeld", { timeout: 30000 });
   console.log("CHECKPOINT client loaded");
   await expect(page.locator("#main")).toContainText("Uw bericht aan Thimo");
+  await page.route("**/api/chat", route => route.fulfill({status:200, contentType:"application/json", body:JSON.stringify({answer:"Thimo testantwoord", proposal:"Testvoorstel voor Parkzicht"})}));
+  await page.locator("#chatInput").fill("Kan er een extra entree komen?");
+  await page.locator("#chatInput").press("Enter");
+  await expect(page.locator("#chatLog")).toContainText("Thimo testantwoord");
+  await expect(page.locator("#proposalText")).toContainText("Testvoorstel voor Parkzicht");
   await expect(page.locator("#contextSelect option")).toHaveCount(3);
 
   // The client chooses a project and changes the authoritative unit/floor brief.
@@ -26,6 +31,8 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await page.locator("#roleSelect").selectOption("staff");
   await expect(page.locator("#main")).toContainText("Goedemiddag, projectteam", {timeout:30000});
   console.log("CHECKPOINT staff loaded");
+  await page.locator("#nav [data-page=cockpit]").evaluate(el => el.click());
+  await expect(page.locator("#main")).toContainText("Projectcockpit");
   await page.locator("#contextSelect").selectOption("p-parkzicht");
   await page.locator("#nav [data-page=products]").evaluate(el => el.click());
   await expect(page.locator("#main")).toContainText("Financiën per unit en onderdeel");
