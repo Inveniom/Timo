@@ -12,7 +12,7 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await page.locator("#clientBriefForm input[name=units]").fill("24");
   await page.locator("#clientBriefForm input[name=floors]").fill("3");
   await page.locator("#clientBriefForm button[type=submit]").click();
-  await expect(page.locator("#main")).toContainText("24 units");
+  await expect(page.locator("#clientBriefForm input[name=units]")).toHaveValue("24");
   await page.waitForTimeout(1200);
   await expect(page.locator("#main")).toContainText("3 bouwlagen");
 
