@@ -13,6 +13,7 @@ Deze herbouw blijft bewust op een aparte branch totdat de onderstaande punten zi
   - `ALLOWED_ORIGIN=https://inveniom.github.io`.
   - `OPENAI_MODEL=gpt-4.1-mini` (of een door Thimo365 goedgekeurd model).
 - Houd `DEMO_MODE=false` in productie. De CI-tests schakelen demo-modus uitsluitend lokaal in.
+- De applicatie vraagt bij een 401 automatisch om de rolgebonden toegangscode; de code blijft alleen in het actieve browsertabblad in geheugen en wordt niet in localStorage opgeslagen.
 - Test daarna de echte login per rol en één AI-gesprek met de productie-Worker. Een succesvolle browsermock is geen bewijs dat OpenAI in productie werkt.
 
 ## Documentopslag (nog te activeren)
