@@ -67,3 +67,11 @@ main{max-width:none!important;padding:34px clamp(18px,3.2vw,56px) 70px!important
 .file-chip button{border:0;background:transparent;cursor:pointer;font-size:18px}
 .supplier-card{transition:transform .15s,box-shadow .15s}.supplier-card:hover{transform:translateY(-3px);box-shadow:0 12px 30px #10231a14}
 .form-actions{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:12px}
+
+/* Editable central master information */
+.master-info-card{display:flex;flex-direction:column;gap:10px;min-width:0}
+.master-info-card h2{margin:0}
+.master-value{white-space:pre-wrap;line-height:1.6;overflow-wrap:anywhere}
+.master-info-card .head-actions{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}
+#masterInfoGrid [hidden]{display:none!important}
+#masterCategoryFilters{margin-top:12px}
