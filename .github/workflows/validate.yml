@@ -37,7 +37,7 @@ jobs:
           CLIENT_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"client","projectId":"p-parkzicht","customerId":"c-parkzicht"}' http://127.0.0.1:8787/api/auth)
           CLIENT_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$CLIENT_AUTH")
           CLIENT_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $CLIENT_TOKEN" http://127.0.0.1:8787/api/state)
-          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.projects.length!==1||s.data.projectOptions.length!==3||s.data.costs.some(x=>"cost" in x))process.exit(1)' "$CLIENT_STATE"
+          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.projects.length!==1||s.data.projectOptions.length!==3||s.data.costs.length!==0||s.data.products.some(x=>"cost" in x||"sale" in x)||"budget" in s.data.projects[0])process.exit(1)' "$CLIENT_STATE"
           STAFF_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"staff"}' http://127.0.0.1:8787/api/auth)
           STAFF_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$STAFF_AUTH")
           STAFF_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $STAFF_TOKEN" http://127.0.0.1:8787/api/state)
@@ -67,7 +67,7 @@ jobs:
           SUPPLIER_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"supplier","supplierId":"s-1"}' http://127.0.0.1:8787/api/auth)
           SUPPLIER_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$SUPPLIER_AUTH")
           SUPPLIER_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $SUPPLIER_TOKEN" http://127.0.0.1:8787/api/state)
-          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.costs.length!==0||s.data.projects.some(p=>"budget" in p)||s.data.tasks.some(t=>t.supplierId!=="s-1")||!s.data.supplierOptions.some(x=>x.id==="s-2"))process.exit(1)' "$SUPPLIER_STATE"
+          node -e 'const s=JSON.parse(process.argv[1]);if(s.data.costs.length!==0||s.data.products.some(x=>"cost" in x||"sale" in x)||s.data.projects.some(p=>"budget" in p)||s.data.tasks.some(t=>t.supplierId!=="s-1")||!s.data.supplierOptions.some(x=>x.id==="s-2"))process.exit(1)' "$SUPPLIER_STATE"
       - name: Check required application files
         run: |
           test -s index.html
