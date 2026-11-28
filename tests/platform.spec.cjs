@@ -89,7 +89,7 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await page.locator("#modalCancel").click();
   console.log("CHECKPOINT supplier loaded with AI Partnercoach and handover checklist");
   await page.locator("#nav [data-page=tasks]").click();
-  await expect(page.locator("#main")).toContainText("Browser test · montagecontrole", { timeout: 10000 });
+  await expect(page.locator("#main")).toContainText("Eerste maakbaarheidstoets", { timeout: 10000 });
 
   // Customer can open the terrain editor, switch floors and drag a module.
   await page.locator("#roleSelect").selectOption("client");
