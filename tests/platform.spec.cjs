@@ -9,7 +9,9 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await page.route("https://fonts.googleapis.com/**", route => route.abort());
   await page.route("https://fonts.gstatic.com/**", route => route.abort());
   await page.goto("http://127.0.0.1:4173/?api=" + encodeURIComponent(api), { waitUntil: "domcontentloaded", timeout: 30000 });
-  await expect(page.locator("#main")).toContainText("Uw project, helder in beeld", { timeout: 30000 });
+  await expect(page.locator("#main")).toContainText("Uw bericht aan Thimo", { timeout: 30000 });
+  await expect(page.locator("#thimoChatPanel")).toBeVisible();
+  await expect(page.locator("#chatInput")).toBeVisible();
   console.log("CHECKPOINT client loaded");
   // init() renders the client shell before the asynchronous /api/auth and /api/state handshake completes.
   // Wait for the central session before testing chat; otherwise bindChat correctly rejects the request.
