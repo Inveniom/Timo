@@ -100,13 +100,13 @@ function bindCommon(){
  $$("#main [data-floor]").forEach(b=>b.onclick=()=>{floor=+b.dataset.floor;selectedUnit=null;render()});
  $$("#main [data-action]").forEach(b=>b.onclick=()=>action(b.dataset.action));
  $$("#main [data-edit-task]").forEach(b=>b.onclick=()=>openTask(db.tasks.find(t=>t.id===b.dataset.editTask)));
- $("#main [data-edit-product]").forEach(b=>b.onclick=()=>editProduct(b.dataset.editProduct));
- $("#main [data-edit-cost]").forEach(b=>b.onclick=()=>editCost(b.dataset.editCost));
+ $$("#main [data-edit-product]").forEach(b=>b.onclick=()=>editProduct(b.dataset.editProduct));
+ $$("#main [data-edit-cost]").forEach(b=>b.onclick=()=>editCost(b.dataset.editCost));
  $$("#main [data-edit-doc]").forEach(b=>b.onclick=()=>editDocument(b.dataset.editDoc));
  $$("#main [data-save-answer]").forEach(b=>b.onclick=()=>{const q=db.questions.find(q=>q.id===b.dataset.saveAnswer);q.answer=$('[data-answer="'+q.id+'"]').value;q.public=$('[data-public="'+q.id+'"]').checked;q.status=$('[data-question-status="'+q.id+'"]').value;log("Antwoord bijgewerkt: "+q.title);save();render();notify("Antwoord opgeslagen.")});
  $$("#main [data-decision]").forEach(s=>s.onchange=()=>{const d=db.decisions.find(x=>x.id===s.dataset.decision);d.status=s.value;log("Besluitstatus gewijzigd: "+d.title);save();render()});
  $$("#main [data-decision-public]").forEach(s=>s.onchange=()=>{const d=db.decisions.find(x=>x.id===s.dataset.decisionPublic);d.visibility=s.checked?"customer":"internal";save();notify("Zichtbaarheid bijgewerkt.")});
- $("#main [data-delivery]").forEach(b=>b.onclick=()=>{const d=db.deliveries.find(x=>x.id===b.dataset.delivery);modal("Levering bijwerken",selectField("Status","status",["Gepland","Aangemeld","Onderweg","Ontvangen","Geaccepteerd","Afwijking"].map(x=>[x,x]),d.status));$("#modalSave").onclick=()=>{d.status=$('[name=status]').value;d.visibility=role==="staff"&&d.status==="Geaccepteerd"?"customer":"internal";log("Leveringstatus bijgewerkt: "+d.item);save();$("#modal").close();render()}});
+ $$("#main [data-delivery]").forEach(b=>b.onclick=()=>{const d=db.deliveries.find(x=>x.id===b.dataset.delivery);modal("Levering bijwerken",selectField("Status","status",["Gepland","Aangemeld","Onderweg","Ontvangen","Geaccepteerd","Afwijking"].map(x=>[x,x]),d.status));$("#modalSave").onclick=()=>{d.status=$('[name=status]').value;d.visibility=role==="staff"&&d.status==="Geaccepteerd"?"customer":"internal";log("Leveringstatus bijgewerkt: "+d.item);save();$("#modal").close();render()}});
  $$("#main [data-supplier-tasks]").forEach(b=>{b.onclick=()=>{const s=b.dataset.supplierTasks;page="tasks";render();notify("Filter de taken op "+(db.suppliers.find(x=>x.id===s)?.name||"leverancier")+" in de planning.")}});
  const statusSel=$("#taskFilter");if(statusSel)statusSel.onchange=()=>{$("#taskRows").innerHTML=taskRows(db.tasks.filter(t=>t.projectId===project().id&&(!statusSel.value||t.status===statusSel.value)))};
  const search=$("#taskSearch"),proj=$("#taskProject");if(search||proj){const filter=()=>{$("#planningBoard").innerHTML=kanban(db.tasks.filter(t=>t.status!=="Afgerond"&&(!proj.value||t.projectId===proj.value)&&(t.title+" "+(db.projects.find(p=>p.id===t.projectId)?.name||"")).toLowerCase().includes(search.value.toLowerCase())));bindBoard()};search.oninput=filter;proj.onchange=filter;bindBoard()}
