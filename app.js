@@ -117,7 +117,7 @@ function bindCommon(){
  bindSupplierProfile();
  $$("#main [data-supplier-requirement]").forEach(b=>b.onclick=()=>newQuestion("Aanlevering: "+b.dataset.supplierRequirement,"Voor project "+project().name+" willen wij de volgende informatie aanleveren of laten bevestigen: "+b.dataset.supplierRequirement+".\n\nDocument / waarde / revisie:\nVerantwoordelijke:\nVerwachte aanleverdatum:\nOpmerking of afwijking:"));
  $$("#nav [data-page], #main [data-page]").forEach(b=>b.onclick=()=>{page=b.dataset.page;render()});
- $("#main [data-open-supplier]").forEach(b=>b.onclick=()=>{activeSupplierId=b.dataset.openSupplier;page="supplier-profile";render()});
+ Array.from(document.querySelectorAll("#main [data-open-supplier]")).forEach(b=>b.onclick=()=>{activeSupplierId=b.dataset.openSupplier;page="supplier-profile";render()});
  $("#main [data-project]").forEach(b=>b.onclick=()=>{db.selectedProject=b.dataset.project;floor=0;selectedUnit=null;save();page=role==="staff"?"cockpit":"home";render()});
  $$("#main [data-phase]").forEach(b=>b.onclick=()=>{if(role!=="staff")return;const p=project(),n=+b.dataset.phase;if(n>p.phase){const incomplete=db.tasks.filter(t=>t.projectId===p.id&&t.phase===p.phase&&t.status!=="Afgerond");if(incomplete.length){notify("Rond eerst alle taken in deze fase af.");return}if(!confirm("Bevestigt een bevoegde medewerker de faseovergang naar "+phases[n]+"?"))return}p.phase=n;log("Projectfase gewijzigd naar "+phases[n]);save();render()});
  $$("#main [data-floor]").forEach(b=>b.onclick=()=>{floor=+b.dataset.floor;selectedUnit=null;render()});
