@@ -4,6 +4,7 @@ const send=(body,status=200,headers={})=>new Response(JSON.stringify(body),{stat
 const parse=async req=>{try{return await req.json()}catch{return null}};
 const iso=()=>new Date().toISOString();
 const safeText=(v,max=4000)=>typeof v==="string"?v.trim().slice(0,max):"";
+function validProjectLayout(r){const count=Number(r.unitCount);if(!Number.isInteger(count)||count<1||count>500)return "Het totale aantal units moet tussen 1 en 500 liggen.";const layout=r.layout||{};if(!Array.isArray(layout.floors)||!layout.floors.length)return null;if(layout.floors.length>6)return "Maximaal zes bouwlagen zijn toegestaan.";const nums=layout.floors.map(f=>Number(f.units));if(nums.some(n=>!Number.isInteger(n)||n<0))return "Het aantal units per bouwlaag moet een geheel getal van nul of hoger zijn.";if(nums.reduce((a,n)=>a+n,0)!==count)return "De verdeling over de bouwlagen moet exact gelijk zijn aan het totale aantal units uit stap 1.";if(Number(r.floorCount)!==layout.floors.length)return "Het aantal bouwlagen komt niet overeen met de ontwerpverdeling.";return null;}
 function demoRecords(){
  const customers=[{id:"c-parkzicht",name:"PARKZICHT",organisation:"Project Parkzicht",contact:"Demo klant"},{id:"c-groenehof",name:"DE GROENE HOF",organisation:"Woningcorporatie",contact:"Demo klant"},{id:"c-haven",name:"HAVENKWARTIER",organisation:"Gemeente",contact:"Demo klant"}];
  const projects=[
@@ -36,7 +37,7 @@ export class ThimoDatabase{
    return send({data:d,role:s.role});
   }
   if(path==="/record"&&method==="POST"){
-   const b=await parse(req),c=b?.collection,r=b?.record;if(!collections.includes(c)||!r||typeof r.id!=="string")return send({error:"Ongeldige registratie"},400);const priorRecord=this.all(c).find(x=>x.id===r.id)||null;const priorProject=c==="projects"?priorRecord:null;
+   const b=await parse(req),c=b?.collection,r=b?.record;if(!collections.includes(c)||!r||typeof r.id!=="string")return send({error:"Ongeldige registratie"},400);if(c==="projects"&&s.role!=="supplier"){const invalid=validProjectLayout(r);if(invalid)return send({error:invalid},422)}const priorRecord=this.all(c).find(x=>x.id===r.id)||null;const priorProject=c==="projects"?priorRecord:null;
    if(s.role==="client"){
     if(!["projects","questions"].includes(c))return send({error:"Geen rechten voor deze registratie"},403);
     if(c==="projects"&&r.id!==s.projectId)return send({error:"Project niet toegankelijk"},403);
