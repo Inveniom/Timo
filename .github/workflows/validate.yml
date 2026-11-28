@@ -43,6 +43,10 @@ jobs:
           node -e 'const s=JSON.parse(process.argv[1]);if(s.data.projects.length!==1||s.data.projectOptions.length!==3||s.data.costs.length!==0||s.data.products.some(x=>"cost" in x||"sale" in x)||"budget" in s.data.projects[0])process.exit(1)' "$CLIENT_STATE"
           STAFF_AUTH=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -d '{"role":"staff"}' http://127.0.0.1:8787/api/auth)
           STAFF_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$STAFF_AUTH")
+          BIM_IFC=$(curl -fsS -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $STAFF_TOKEN" -d '{"format":"ifc","filename":"smoke.ifc","content":"ISO-10303-21;\nHEADER;\nFILE_SCHEMA(((''IFC4'')));\nENDSEC;\nDATA;\nENDSEC;\nEND-ISO-10303-21;"}' http://127.0.0.1:8787/api/bim/validate)
+          node -e 'const r=JSON.parse(process.argv[1]);if(!r.valid||r.format!=="ifc")process.exit(1)' "$BIM_IFC"
+          BIM_CLIENT=$(curl -sS -o /tmp/thimo-bim-client.json -w '%{http_code}' -X POST -H 'Origin: https://inveniom.github.io' -H 'Content-Type: application/json' -H "Authorization: Bearer $CLIENT_TOKEN" -d '{"format":"ifc","content":"ISO-10303-21;"}' http://127.0.0.1:8787/api/bim/validate)
+          test "$BIM_CLIENT" = "403"
           STAFF_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $STAFF_TOKEN" http://127.0.0.1:8787/api/state)
           node -e 'const s=JSON.parse(process.argv[1]);if(!s.data.costs.some(x=>"cost" in x)||s.data.projects.length!==3)process.exit(1)' "$STAFF_STATE"
           STAFF_PROJECT=$(node -e 'const s=JSON.parse(process.argv[1]);console.log(JSON.stringify(s.data.projects.find(p=>p.id==="p-parkzicht")) )' "$STAFF_STATE")
