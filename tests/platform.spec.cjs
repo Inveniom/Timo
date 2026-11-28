@@ -70,7 +70,17 @@ test("customer, staff and supplier share one project and terrain editor works", 
   await expect(page.locator("#main")).toContainText("Levering aanmelden");
   await expect(page.locator("#main")).toContainText("Technische documentatie");
   await expect(page.locator("#main")).toContainText("Vraagstukken");
-  console.log("CHECKPOINT supplier loaded");
+  await expect(page.locator("#supplierChatPanel")).toBeVisible();
+  await expect(page.locator("#main")).toContainText("Wat hebben we van u nodig?");
+  await expect(page.locator("#main")).toContainText("Certificaten & verklaringen");
+  await page.locator("#supplierChatInput").fill("Welke documenten moet ik aanleveren?");
+  await page.locator("#supplierChatInput").press("Enter");
+  await expect(page.locator("#supplierChatLog")).toContainText("Thimo testantwoord");
+  await page.locator("#main [data-supplier-requirement]").first().click();
+  await expect(page.locator("#modal")).toBeVisible();
+  await expect(page.locator("#modal input[name=title]")).toHaveValue("Aanlevering: Technische datasheet");
+  await page.locator("#modalCancel").click();
+  console.log("CHECKPOINT supplier loaded with AI Partnercoach and handover checklist");
   await page.locator("#nav [data-page=tasks]").click();
   await expect(page.locator("#main")).toContainText("Browser test · montagecontrole", { timeout: 10000 });
 
