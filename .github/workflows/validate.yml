@@ -68,6 +68,24 @@ jobs:
           SUPPLIER_TOKEN=$(node -e 'console.log(JSON.parse(process.argv[1]).token)' "$SUPPLIER_AUTH")
           SUPPLIER_STATE=$(curl -fsS -H 'Origin: https://inveniom.github.io' -H "Authorization: Bearer $SUPPLIER_TOKEN" http://127.0.0.1:8787/api/state)
           node -e 'const s=JSON.parse(process.argv[1]);if(s.data.costs.length!==0||s.data.products.some(x=>"cost" in x||"sale" in x)||s.data.projects.some(p=>"budget" in p)||s.data.tasks.some(t=>t.supplierId!=="s-1")||!s.data.supplierOptions.some(x=>x.id==="s-2"))process.exit(1)' "$SUPPLIER_STATE"
+      - name: Install Playwright browser
+        run: |
+          npm init -y
+          npm install --no-save @playwright/test
+          npx playwright install --with-deps chromium
+      - name: Run three-role browser acceptance test
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/thimo-static.log 2>&1 &
+          STATIC_PID=$!
+          wrangler dev --config ai-backend/wrangler.toml --port 8787 --var ALLOWED_ORIGIN:http://127.0.0.1:4173 > /tmp/thimo-worker-browser.log 2>&1 &
+          WORKER_PID=$!
+          trap 'kill "$STATIC_PID" "$WORKER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/ > /dev/null && curl -fsS http://127.0.0.1:8787/ > /dev/null; then break; fi
+            sleep 2
+          done
+          npx playwright test tests/platform.spec.cjs --reporter=line
       - name: Check required application files
         run: |
           test -s index.html
