@@ -50,7 +50,7 @@ function id(prefix){return prefix+"-"+Date.now().toString(36)+"-"+(db.nextId++)}
 function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function money(n){return new Intl.NumberFormat("nl-NL",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n||0)}
 function project(){return db.projects.find(p=>p.id===db.selectedProject)||db.projects[0]}
-function customer(){return db.customers.find(c=>c.id===project().customerId)||db.customers[0]}
+function customer(){const p=project();const customers=Array.isArray(db?.customers)?db.customers:[];return customers.find(c=>c.id===p?.customerId)||customers[0]||{id:p?.customerId||"c-demo",name:p?.customerName||"Projectorganisatie",contact:p?.contact||"Projectcontact",email:p?.email||""}}
 function product(p=project()){return db.products.find(x=>x.id===p.moduleId)||db.products[0]}
 function log(text,p=project()){db.activity.unshift({id:id("ev"),projectId:p.id,text,at:new Date().toISOString()});db.activity=db.activity.slice(0,100);save()}
 function notify(s){const t=$("#toast");t.textContent=s;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),2600)}
