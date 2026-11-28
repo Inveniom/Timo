@@ -1,17 +1,14 @@
 <!doctype html>
 <html lang="nl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f7f5"><meta name="description" content="Thimo365 — van klantvraag tot levering, één verbonden projectproces."><title>Thimo365 | Projectomgeving</title><link rel="stylesheet" href="./styles.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#172d29"><meta name="description" content="Thimo365 — samen van idee naar gerealiseerd project.">
+<title>Thimo365 | Projectomgeving</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 <div id="app">
-<a class="skip-link" href="#main">Direct naar de inhoud</a>
-<header class="topbar">
- <a class="brand" href="#" aria-label="Thimo365 startpagina"><span class="brand-mark">t</span><span class="brand-word">thimo<span>365</span></span><small>MEEDENKEN ALS BASIS · BOUWEN IN HOUT ALS RESULTAAT</small></a>
- <div class="topbar-context"><span class="topbar-kicker">THIMO365 PROJECTOMGEVING</span><strong>Van eerste idee tot oplevering.</strong></div>
- <div class="top-actions"><span class="demo-label"><i></i> DEMO</span><label class="role-switch"><span>Werkruimte</span><select id="roleSelect" aria-label="Kies omgeving"><option value="client">Klant</option><option value="staff">Thimo-medewerker</option><option value="supplier">Leverancier</option></select></label><label class="role-switch supplier-switch" id="supplierSwitch" hidden><span>Leverancier</span><select id="supplierSelect" aria-label="Kies leverancier"></select></label><span id="connection" class="connection">Verbinden…</span></div>
-</header>
-<div class="app-shell"><aside class="sidebar"><div class="sidebar-heading">WERKOMGEVING</div><nav id="navigation" aria-label="Hoofdnavigatie"></nav><div class="sidebar-foot"><span class="status-dot"></span><span id="storageStatus">Centrale projectomgeving</span></div></aside><main id="main" tabindex="-1"><div class="loading">Thimo365 wordt geladen…</div></main></div>
-<footer><div class="footer-brand"><strong>thimo<span>365</span></strong><small>MEEDENKEN ALS BASIS</small></div><span>Een verbonden projectproces · van vraag tot realisatie</span><button id="resetDemo" class="text-button" type="button">Demogegevens herstellen</button></footer><div id="toast" class="toast" role="status" aria-live="polite"></div>
-</div><script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" crossorigin="anonymous"></script><script>window.setTimeout(function(){var main=document.getElementById("main");if(main&&main.querySelector(".loading")){main.innerHTML='<section class="card"><h1>Thimo365 start niet door</h1><p>De applicatiemodule is niet op tijd gestart. Vernieuw de pagina. Blijft dit gebeuren, meld dit dan aan het Thimo365-team.</p><button class="button" type="button" onclick="location.reload()">Opnieuw laden</button></section>';}},15000);</script><script type="module" src="./app.js"></script>
-</body></html>
+<header class="topbar"><a class="brand" href="#" aria-label="Thimo365 start"><span class="brand-mark">t</span><span>thimo<span class="brand-light">365</span></span></a><div class="top-project"><span class="eyebrow">WERKOMGEVING</span><strong id="projectName">Parkzicht · Zwolle</strong></div><div class="top-actions"><label class="role-picker"><span>Omgeving</span><select id="roleSelect"><option value="client">Klant</option><option value="staff">Thimo team</option><option value="supplier">Leverancier</option></select></label><span class="live-pill"><i></i> Demo-omgeving</span><button class="avatar" id="profileBtn" title="Profiel">M</button></div></header>
+<div class="shell"><aside class="sidebar"><div class="side-label" id="sideLabel">UW PROJECT</div><nav id="nav"></nav><div class="side-bottom"><div class="help-card"><span class="help-icon">✳</span><strong>Hulp nodig?</strong><p>Thimo denkt met u mee. Stel gerust uw vraag.</p><button class="text-btn" data-page="questions">Stel een vraag ↗</button></div><div class="side-user"><span class="user-dot">M</span><span><b id="userName">Martijn</b><small id="userRole">Klantomgeving</small></span><span class="dots">···</span></div></div></aside>
+<main id="main" tabindex="-1"><div class="loading-state"><div class="loader"></div><p>Thimo365 wordt klaargezet…</p></div></main></div>
+<div id="toast" role="status" aria-live="polite"></div><dialog id="modal"><form method="dialog" class="modal-card"><button class="modal-close" aria-label="Sluiten">×</button><div id="modalContent"></div></form></dialog>
+</div><script src="./app.js" defer></script></body></html>
