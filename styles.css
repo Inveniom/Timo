@@ -55,3 +55,15 @@ main{max-width:none!important;padding:34px clamp(18px,3.2vw,56px) 70px!important
 .thimo-chat-panel .chat-compose input{border:2px solid #d9d2c5!important;border-radius:10px!important;background:#fff!important}.thimo-chat-panel .chat-compose input:focus{border-color:#087f78!important;outline:3px solid #087f781a!important}.thimo-chat-panel .chat-send{background:#ff684d!important;border-color:#ff684d!important;color:#fff!important;border-radius:10px!important}.chat-send span{color:#fff!important}.chat-footnote{color:#85877e!important}
 .section-intro h2{color:#17212b!important}.step-card{border-radius:8px 20px 8px 20px!important}.step-number{color:#eee9df!important}.proposal-card{background:linear-gradient(145deg,#fffdf8,#e2f5ef)!important}.proposal-metrics b{color:#087f78!important}.shortcut-card{background:#fffdf8!important;border:1px solid #ded8cb!important;border-radius:8px 16px 8px 16px!important}.shortcut-card>span{background:#d7eee6!important;color:#087f78!important}.shortcut-card em{color:#ff684d!important}
 @media(max-width:760px){.topbar{border-bottom-width:3px!important}.sidebar{background:#e9e3d7!important}.welcome-hero{border-radius:8px 22px 8px 22px!important}.thimo-chat-panel{padding:20px 15px 15px!important}}
+
+/* Drag-first forms and individual supplier workspaces */
+.choice-tray{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;padding:8px;border:1px dashed var(--line,#cbd5d1);border-radius:14px;min-height:48px}
+.choice-chip{border:1px solid var(--line,#d4ddd8);background:var(--surface,#f8faf8);color:inherit;border-radius:12px;padding:9px 13px;cursor:grab;font:inherit;transition:.15s}
+.choice-chip:active{cursor:grabbing}.choice-chip.selected{background:#d9f5e8;border-color:#1b9b78;color:#075d4e;box-shadow:inset 0 0 0 1px #1b9b78}
+.choice-tray:has(.choice-chip:focus){outline:2px solid #159b7b;outline-offset:2px}
+.supplier-dropzone{display:flex;min-height:150px;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed #7ab9a8;border-radius:16px;background:#f0faf6;color:#246b5c;cursor:pointer;text-align:center;padding:22px}
+.supplier-dropzone.active{background:#d9f5e8;border-color:#087e70}
+.file-chip{display:inline-flex;gap:12px;align-items:center;padding:8px 12px;margin:10px 8px 0 0;background:#eef3f1;border-radius:10px}
+.file-chip button{border:0;background:transparent;cursor:pointer;font-size:18px}
+.supplier-card{transition:transform .15s,box-shadow .15s}.supplier-card:hover{transform:translateY(-3px);box-shadow:0 12px 30px #10231a14}
+.form-actions{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:12px}
