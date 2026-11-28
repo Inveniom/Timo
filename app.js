@@ -7,7 +7,7 @@ const seed=()=>({customers:[{id:"c1",name:"Parkzicht Ontwikkeling",contact:"Mart
 let db,role="client",page="home",floor=0,selectedUnit=null,drag=null,toastTimer,activeSupplierId="s-1";
 function load(){try{const x=JSON.parse(localStorage.getItem("thimo365-next"));if(x&&x.projects&&x.products)return x}catch(e){}return seed()}
 const API_BASE=(["localhost","127.0.0.1"].includes(location.hostname)?new URLSearchParams(location.search).get("api"):"")||"https://timo-agent.martijn-d1c.workers.dev";
-let remoteToken="",remoteEnabled=false,remoteTimer=null,remoteProjectOptions=[],remoteHashes={},remoteSyncBusy=false,remoteSyncAgain=false,remotePending=false,remotePollTimer=null;
+let remoteToken="",remoteEnabled=false,remoteTimer=null,remoteProjectOptions=[],remoteHashes={},remoteSyncBusy=false,remoteSyncAgain=false,remotePending=false,remotePollTimer=null,roleAccessCode="";
 function save(){localStorage.setItem("thimo365-next",JSON.stringify(db));if(remoteEnabled){remotePending=true;clearTimeout(remoteTimer);remoteTimer=setTimeout(()=>syncRemote().catch(e=>{console.warn("Synchronisatie niet gelukt",e);notify("Lokaal opgeslagen; centrale synchronisatie is niet gelukt.")}),900)}}
 async function api(path,method="GET",body){const r=await fetch(API_BASE+path,{method,headers:{"Content-Type":"application/json",...(remoteToken?{Authorization:"Bearer "+remoteToken}:{})},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000)});const j=await r.json().catch(()=>({error:"Ongeldige serverreactie"}));if(!r.ok)throw new Error(j.error||("HTTP "+r.status));return j}
 function importRemote(d){
@@ -27,7 +27,7 @@ function startRemotePolling(){if(remotePollTimer)clearInterval(remotePollTimer);
 async function connectRemote(projectIdOverride){
  remoteEnabled=false;remoteToken="";
  const p=project(),body={role,projectId:projectIdOverride||((p?.id&&p.id.startsWith("p-"))?p.id:"p-parkzicht"),customerId:p?.customerId||"c-parkzicht",supplierId:activeSupplierId||"s-1"};
- const a=await api("/api/auth","POST",body);if(!a.token)throw new Error("De centrale omgeving gaf geen sessietoken terug.");remoteToken=a.token;
+ let a;try{a=await api("/api/auth","POST",{...body,...(roleAccessCode?{accessCode:roleAccessCode}:{})})}catch(err){if(!/Toegangscode ongeldig/i.test(err.message))throw err;const code=window.prompt("Voer de toegangscode in voor de "+(role==="staff"?"medewerkersomgeving":role==="supplier"?"leveranciersomgeving":"klantomgeving")+".");if(!code||!code.trim())throw err;roleAccessCode=code.trim();a=await api("/api/auth","POST",{...body,accessCode:roleAccessCode})}if(!a.token)throw new Error("De centrale omgeving gaf geen sessietoken terug.");remoteToken=a.token;
  const state=await api("/api/state");if(!state?.data)throw new Error("Geen projectgegevens ontvangen.");
  importRemote(state.data);remoteEnabled=true;db.remoteStatus="connected";localStorage.setItem("thimo365-next",JSON.stringify(db));startRemotePolling();return true;
 }
@@ -45,7 +45,7 @@ async function syncRemote(){
   else{for(const p of db.projects)await pushRemoteRecord("projects",p);for(const c of ["products","costs","tasks","questions","decisions","documents","suppliers","deliveries"])for(const r of db[c]||[])await pushRemoteRecord(c,r)}
  }while(remoteSyncAgain)}finally{remoteSyncBusy=false;remotePending=false}
 }
-async function switchRole(next){role=next;page="home";floor=0;selectedUnit=null;try{await connectRemote();notify("Verbonden met de centrale projectomgeving.")}catch(e){console.warn("Centrale omgeving niet bereikbaar",e);remoteEnabled=false;remoteToken="";notify("Lokale demo actief; centrale verbinding niet beschikbaar.")}render()}
+async function switchRole(next){role=next;roleAccessCode="";page="home";floor=0;selectedUnit=null;try{await connectRemote();notify("Verbonden met de centrale projectomgeving.")}catch(e){console.warn("Centrale omgeving niet bereikbaar",e);remoteEnabled=false;remoteToken="";notify("Lokale demo actief; centrale verbinding niet beschikbaar.")}render()}
 function id(prefix){return prefix+"-"+Date.now().toString(36)+"-"+(db.nextId++)}
 function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function money(n){return new Intl.NumberFormat("nl-NL",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n||0)}
